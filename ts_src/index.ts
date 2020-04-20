@@ -34,12 +34,6 @@ export async function requestPayjoinWithCustomRemoteCall(
   const payjoinPsbt = await remoteCall(clonedPsbt);
   if (!payjoinPsbt) throw new Error("We did not get the receiver's PSBT");
 
-  // no inputs were added?
-  if (clonedPsbt.inputCount <= payjoinPsbt.inputCount) {
-    throw new Error(
-      "There were less inputs than before in the receiver's PSBT",
-    );
-  }
 
   if (
     payjoinPsbt.data.globalMap.globalXpub &&
@@ -93,8 +87,13 @@ export async function requestPayjoinWithCustomRemoteCall(
         payjoinPsbt.updateOutput(index, originalOutput);
     });
   }
-  // TODO: check payjoinPsbt.version == psbt.version
-  // TODO: check payjoinPsbt.locktime == psbt.locktime
+
+  if (getGlobalTransaction(payjoinPsbt).version !== getGlobalTransaction(psbt).version) {
+    throw new Error('The version field of the transaction has been modified');
+  }
+  if (getGlobalTransaction(payjoinPsbt).locktime !== getGlobalTransaction(psbt).locktime) {
+    throw new Error('The LockTime field of the transaction has been modified');
+  }
   // TODO: check payjoinPsbt.inputs where input belongs to us, that it is not finalized
   // TODO: check payjoinPsbt.inputs where input belongs to us, that it is was included in psbt.inputs
   // TODO: check payjoinPsbt.inputs where input belongs to us, that its sequence has not changed from that of psbt.inputs
