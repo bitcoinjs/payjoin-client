@@ -1,4 +1,4 @@
-import { Psbt, Transaction, payments } from 'bitcoinjs-lib';
+import { payments, Psbt, Transaction, TxInput } from 'bitcoinjs-lib';
 import {
   Bip32Derivation,
   GlobalXpub,
@@ -6,13 +6,6 @@ import {
 } from 'bip174/src/lib/interfaces';
 
 type Nullable<T> = T | null;
-interface TxInput {
-  hash: Buffer;
-  index: number;
-  script: Buffer;
-  sequence: number;
-  witness: Buffer[];
-}
 
 export async function requestPayjoinWithCustomRemoteCall(
   psbt: Psbt,
@@ -32,7 +25,6 @@ export async function requestPayjoinWithCustomRemoteCall(
 
   const payjoinPsbt = await remoteCall(clonedPsbt);
   if (!payjoinPsbt) throw new Error("We did not get the receiver's PSBT");
-
 
   if (
     payjoinPsbt.data.globalMap.globalXpub &&
@@ -87,10 +79,16 @@ export async function requestPayjoinWithCustomRemoteCall(
     });
   }
 
-  if (getGlobalTransaction(payjoinPsbt).version !== getGlobalTransaction(psbt).version) {
+  if (
+    getGlobalTransaction(payjoinPsbt).version !==
+    getGlobalTransaction(psbt).version
+  ) {
     throw new Error('The version field of the transaction has been modified');
   }
-  if (getGlobalTransaction(payjoinPsbt).locktime !== getGlobalTransaction(psbt).locktime) {
+  if (
+    getGlobalTransaction(payjoinPsbt).locktime !==
+    getGlobalTransaction(psbt).locktime
+  ) {
     throw new Error('The LockTime field of the transaction has been modified');
   }
   // TODO: check payjoinPsbt.inputs where input belongs to us, that it is not finalized
