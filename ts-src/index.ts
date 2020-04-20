@@ -33,8 +33,10 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
     throw new Error(('Keypath information should not be included in the receiver\'s PSBT');
   }
 
-  // TODO: check sanity
-
+  const sanityResult = checkSanity(payjoinPsbt);
+  if(Object.keys(sanityResult).length > 0){
+    throw new Error(`Receiver's PSBT is insane: ${JSON.stringify(sanityResult)}`);
+  }
 
   // We make sure we don't sign what should not be signed
   for (let index = 0; index < payjoinPsbt.inputCount; index++) {
@@ -81,11 +83,18 @@ export function requestPayjoin(psbt: Psbt, payjoinEndpoint: string) {
   return requestPayjoinWithCustomRemoteCall(psbt, psbt1 => doRequest(psbt1, payjoinEndpoint));
 }
 
-function checkSanity(psbt: Psbt): boolean {
-  return psbt.data.inputs.filter(value => !checkInputSanity(value)).length === 0;
+function checkSanity(psbt: Psbt): { [index: number]: string[] } {
+  const result: { [index: number]: string[] } = {};
+  psbt.data.inputs.forEach((value, index) => {
+    const sanityResult = checkInputSanity(value, getGlobalTransaction(psbt).ins[index]);
+    if (sanityResult.length > 0) {
+      result[index] = sanityResult;
+    }
+  });
+  return result;
 }
 
-function checkInputSanity(input: PsbtInput, txInput: Input): boolean {
+function checkInputSanity(input: PsbtInput, txInput: Input): string[] {
   const errors: string[] = [];
   if (isFinalized(input)) {
     if (input.partialSig && input.partialSig.length > 0) {
@@ -112,11 +121,11 @@ function checkInputSanity(input: PsbtInput, txInput: Input): boolean {
     errors.push('witness script present but no witness utxo');
   }
 
-  if (!input.finalScriptWitness && !input.witnessUtxo){
+  if (!input.finalScriptWitness && !input.witnessUtxo) {
     errors.push('final witness script present but no witness utxo');
   }
 
-  if(input.nonWitnessUtxo){
+  if (input.nonWitnessUtxo) {
     //TODO: get hash
     const prevOutTxId = input.nonWitnessUtxo;
     let validOutpoint = true;
@@ -131,32 +140,33 @@ function checkInputSanity(input: PsbtInput, txInput: Input): boolean {
     }
     if (input.redeemScript && validOutpoint) {
       if (input.redeemScript.Hash.ScriptPubKey != input.nonWitnessUtxo.Outputs[txInput.index].ScriptPubKey)
-        errors.push( 'The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo');
+        errors.push('The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo');
     }
   }
 
   if (input.witnessUtxo) {
     if (input.redeemScript) {
       if (input.redeemScript.Hash.ScriptPubKey != input.witnessUtxo.ScriptPubKey)
-        errors.push( 'The redeem_script is not coherent with the scriptPubKey of the witness_utxo');
+        errors.push('The redeem_script is not coherent with the scriptPubKey of the witness_utxo');
       if (input.witnessScript &&
         input.redeemScript &&
-        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(redeem_script) != input.witnessScript.WitHash)
+        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(input.redeemScript) != input.witnessScript.WitHash)
         errors.push('witnessScript with witness UTXO does not match the redeemScript');
     }
   }
 
+  //figure out how to port this lofic
+  // if (input.witnessUtxo.ScriptPubKey is  Script s)
+  // {
+  //
+  //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
+  //     errors.push('A Witness UTXO is provided for a non-witness input');
+  //   if (s.IsScriptType(ScriptType.P2SH) && redeem_script is Script r && !r.IsScriptType(ScriptType.Witness))
+  //   errors.push('A Witness UTXO is provided for a non-witness input');
+  // }
 
-  if (input.witnessUtxo.ScriptPubKey is  Script s)
-  {
-    if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
-      errors.push('A Witness UTXO is provided for a non-witness input');
-    if (s.IsScriptType(ScriptType.P2SH) && redeem_script is  Script r && !r.IsScriptType(ScriptType.Witness) )
-      errors.push 'A Witness UTXO is provided for a non-witness input');
-  }
 
-
-  return true;
+  return errors;
 }
 
 
