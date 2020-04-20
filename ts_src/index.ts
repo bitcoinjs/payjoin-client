@@ -158,8 +158,8 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
   }
 
   if (input.nonWitnessUtxo) {
-    // TODO: get hash
-    const prevOutTxId = input.nonWitnessUtxo;
+    const nonWitnessUtxoTransaction = Transaction.fromBuffer(input.nonWitnessUtxo);
+    const prevOutTxId = nonWitnessUtxoTransaction.getHash();
     let validOutpoint = true;
 
     if (txInput.hash !== prevOutTxId) {
@@ -169,7 +169,7 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
       validOutpoint = false;
     }
     // @ts-ignore
-    if (txInput.index >= input.nonWitnessUtxo.Outputs.length) {
+    if (txInput.index >= nonWitnessUtxoTransaction.outs.length) {
       errors.push(
         'Global transaction referencing an out of bound output in non_witness_utxo',
       );
