@@ -1,5 +1,6 @@
 import { Psbt, Transaction } from 'bitcoinjs-lib';
 import { p2wpkh } from 'bitcoinjs-lib/types/payments';
+import { PsbtInput } from 'bip174/src/lib/interfaces';
 
 type Nullable<T> = T | null;
 
@@ -18,24 +19,26 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
 
   const payjoinPsbt = await remoteCall(clonedPsbt);
   if (!payjoinPsbt) return null;
+
   // no inputs were added?
   if (clonedPsbt.inputCount <= payjoinPsbt.inputCount) {
     return null;
   }
 
-  // We make sure we don't sign things what should not be signed
+  if(clonedPsbt.data.globalMap.globalXpub !== undefined && clonedPsbt.data.globalMap.globalXpub.length > 0)
+
+
+  // We make sure we don't sign what should not be signed
   for (let index = 0; index < payjoinPsbt.inputCount; index++) {
-    // Is Finalized
-    if (
-      payjoinPsbt.data.inputs[index].finalScriptSig !== undefined ||
-      payjoinPsbt.data.inputs[index].finalScriptWitness !== undefined
-    )
+    // check if input is Finalized
+    if ( isFinalized(payjoinPsbt.data.inputs[index]))
       payjoinPsbt.clearFinalizedInput(index);
   }
+
   for (let index = 0; index < payjoinPsbt.data.outputs.length; index++) {
     const output = payjoinPsbt.data.outputs[index];
     const outputLegacy = getGlobalTransaction(payjoinPsbt).outs[index];
-    // Make sure only the only our output have any information
+    // Make sure only our output has any information
     delete output.bip32Derivation;
     psbt.data.outputs.forEach(originalOutput => {
       // update the payjoin outputs
@@ -70,7 +73,12 @@ export function requestPayjoin(psbt: Psbt, payjoinEndpoint: string) {
   return requestPayjoinWithCustomRemoteCall(psbt, psbt1 => doRequest(psbt1, payjoinEndpoint));
 }
 
-function getGlobalTransaction(psbt: Psbt): Transaction{
+function isFinalized(input: PsbtInput) {
+  return input.finalScriptSig !== undefined ||
+    input.finalScriptWitness !== undefined;
+}
+
+function getGlobalTransaction(psbt: Psbt): Transaction {
   // TODO: bitcoinjs-lib to expose outputs to Psbt class
   // instead of using private (JS has no private) attributes
   // @ts-ignore
