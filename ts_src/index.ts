@@ -1,5 +1,4 @@
-import { Psbt, Transaction } from 'bitcoinjs-lib';
-import { payments } from 'bitcoinjs-lib';
+import { Psbt, Transaction, payments } from 'bitcoinjs-lib';
 import {
   Bip32Derivation,
   GlobalXpub,
