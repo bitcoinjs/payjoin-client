@@ -130,34 +130,29 @@ function checkInputSanity(input: PsbtInput, txInput: Input): boolean {
       validOutpoint = false;
     }
     if (input.redeemScript && validOutpoint) {
-      if (input.redeemScript.Hash.ScriptPubKey != NonWitnessUtxo.Outputs[TxIn.PrevOut.N].ScriptPubKey)
-        errors.Add(new PSBTError(Index, 'The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo'));
+      if (input.redeemScript.Hash.ScriptPubKey != input.nonWitnessUtxo.Outputs[txInput.index].ScriptPubKey)
+        errors.push( 'The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo');
     }
   }
 
-  if (witness_utxo != null) {
-    if (redeem_script != null) {
-      if (redeem_script.Hash.ScriptPubKey != witness_utxo.ScriptPubKey)
-        errors.Add(new PSBTError(Index, 'The redeem_script is not coherent with the scriptPubKey of the witness_utxo'));
-      if (witness_script != null &&
-        redeem_script != null &&
-        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(redeem_script) != witness_script.WitHash)
-        errors.Add(new PSBTError(Index, 'witnessScript with witness UTXO does not match the redeemScript'));
+  if (input.witnessUtxo) {
+    if (input.redeemScript) {
+      if (input.redeemScript.Hash.ScriptPubKey != input.witnessUtxo.ScriptPubKey)
+        errors.push( 'The redeem_script is not coherent with the scriptPubKey of the witness_utxo');
+      if (input.witnessScript &&
+        input.redeemScript &&
+        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(redeem_script) != input.witnessScript.WitHash)
+        errors.push('witnessScript with witness UTXO does not match the redeemScript');
     }
   }
 
-  if (witness_utxo?.ScriptPubKey is;
-  Script;
-  s;
-)
+
+  if (input.witnessUtxo.ScriptPubKey is  Script s)
   {
     if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
-      errors.Add(new PSBTError(Index, 'A Witness UTXO is provided for a non-witness input'));
-    if (s.IsScriptType(ScriptType.P2SH) && redeem_script is;
-    Script;
-    r && !r.IsScriptType(ScriptType.Witness);
-  )
-    errors.Add(new PSBTError(Index, 'A Witness UTXO is provided for a non-witness input'));
+      errors.push('A Witness UTXO is provided for a non-witness input');
+    if (s.IsScriptType(ScriptType.P2SH) && redeem_script is  Script r && !r.IsScriptType(ScriptType.Witness) )
+      errors.push 'A Witness UTXO is provided for a non-witness input');
   }
 
 
