@@ -134,17 +134,16 @@ function checkInputSanity(input, txInput) {
     errors.push('final witness script present but no witness utxo');
   }
   if (input.nonWitnessUtxo) {
-    // TODO: get hash
-    const prevOutTxId = input.nonWitnessUtxo;
+    const prevTx = bitcoinjs_lib_1.Transaction.fromBuffer(input.nonWitnessUtxo);
+    const prevOutTxId = prevTx.getHash();
     let validOutpoint = true;
-    if (txInput.hash !== prevOutTxId) {
+    if (!txInput.hash.equals(prevOutTxId)) {
       errors.push(
         'non_witness_utxo does not match the transaction id referenced by the global transaction sign',
       );
       validOutpoint = false;
     }
-    // @ts-ignore
-    if (txInput.index >= input.nonWitnessUtxo.Outputs.length) {
+    if (txInput.index >= prevTx.outs.length) {
       errors.push(
         'Global transaction referencing an out of bound output in non_witness_utxo',
       );
@@ -152,10 +151,9 @@ function checkInputSanity(input, txInput) {
     }
     if (input.redeemScript && validOutpoint) {
       if (
-        // @ts-ignore
-        input.redeemScript.Hash.ScriptPubKey !==
-        // @ts-ignore
-        input.nonWitnessUtxo.Outputs[txInput.index].ScriptPubKey
+        !redeemScriptToScriptPubkey(input.redeemScript).equals(
+          prevTx.outs[txInput.index].script,
+        )
       )
         errors.push(
           'The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo',
@@ -165,8 +163,9 @@ function checkInputSanity(input, txInput) {
   if (input.witnessUtxo) {
     if (input.redeemScript) {
       if (
-        // @ts-ignore
-        input.redeemScript.Hash.ScriptPubKey !== input.witnessUtxo.ScriptPubKey
+        !redeemScriptToScriptPubkey(input.redeemScript).equals(
+          input.witnessUtxo.script,
+        )
       )
         errors.push(
           'The redeem_script is not coherent with the scriptPubKey of the witness_utxo',
@@ -174,10 +173,9 @@ function checkInputSanity(input, txInput) {
       if (
         input.witnessScript &&
         input.redeemScript &&
-        // @ts-ignore
-        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(
-          input.redeemScript,
-        ) !== input.witnessScript.WitHash
+        !input.redeemScript.equals(
+          witnessScriptToScriptPubkey(input.witnessScript),
+        )
       )
         errors.push(
           'witnessScript with witness UTXO does not match the redeemScript',
@@ -194,6 +192,14 @@ function checkInputSanity(input, txInput) {
   //   errors.push('A Witness UTXO is provided for a non-witness input');
   // }
   return errors;
+}
+function redeemScriptToScriptPubkey(redeemScript) {
+  return bitcoinjs_lib_1.payments.p2sh({ redeem: { output: redeemScript } })
+    .output;
+}
+function witnessScriptToScriptPubkey(witnessScript) {
+  return bitcoinjs_lib_1.payments.p2wsh({ redeem: { output: witnessScript } })
+    .output;
 }
 function hasKeypathInformationSet(items) {
   return (
