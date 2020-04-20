@@ -1,0 +1,29 @@
+{
+  "moduleFileExtensions": [
+    "ts",
+    "js",
+    "json"
+  ],
+  "transform": {
+    "^.+\\.ts$": "ts-jest"
+  },
+  "testRegex": "/ts_src/.*\\.spec\\.ts$",
+  "testURL": "http://localhost/",
+  "coverageThreshold": {
+    "global": {
+      "statements": 0,
+      "branches": 0,
+      "functions": 0,
+      "lines": 0
+    }
+  },
+  "collectCoverageFrom": [
+    "ts_src/**/*.ts",
+    "!**/node_modules/**"
+  ],
+  "coverageReporters": [
+    "lcov",
+    "text"
+  ],
+  "verbose": true
+}
