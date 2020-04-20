@@ -1,11 +1,24 @@
 import { Psbt, Transaction } from 'bitcoinjs-lib';
-import { p2wpkh } from 'bitcoinjs-lib/types/payments';
-import { Bip32Derivation, GlobalXpub, PsbtInput } from 'bip174/src/lib/interfaces';
-import { Input } from 'bitcoinjs-lib/types/transaction';
+import { payments } from 'bitcoinjs-lib';
+import {
+  Bip32Derivation,
+  GlobalXpub,
+  PsbtInput,
+} from 'bip174/src/lib/interfaces';
 
 type Nullable<T> = T | null;
+interface TxInput {
+  hash: Buffer;
+  index: number;
+  script: Buffer;
+  sequence: number;
+  witness: Buffer[];
+}
 
-export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall: (psbt: Psbt) => Promise<Nullable<Psbt>>) {
+export async function requestPayjoinWithCustomRemoteCall(
+  psbt: Psbt,
+  remoteCall: (psbt: Psbt) => Promise<Nullable<Psbt>>,
+): Promise<void> {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
 
@@ -13,29 +26,43 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
   for (let index = 0; index < clonedPsbt.inputCount; index++) {
     clonedPsbt.clearFinalizedInput(index);
   }
-  clonedPsbt.data.outputs.forEach(output => {
+  clonedPsbt.data.outputs.forEach((output): void => {
     delete output.bip32Derivation;
   });
   delete clonedPsbt.data.globalMap.globalXpub;
 
   const payjoinPsbt = await remoteCall(clonedPsbt);
-  if (!payjoinPsbt) throw new Error('We did not get the receiver\'s PSBT');
+  if (!payjoinPsbt) throw new Error("We did not get the receiver's PSBT");
 
   // no inputs were added?
   if (clonedPsbt.inputCount <= payjoinPsbt.inputCount) {
-    throw new Error('There were less inputs than before in the receiver\'s PSBT');
+    throw new Error(
+      "There were less inputs than before in the receiver's PSBT",
+    );
   }
 
-  if (payjoinPsbt.data.globalMap.globalXpub && (payjoinPsbt.data.globalMap.globalXpub as GlobalXpub[]).length > 0) {
-    throw new Error('GlobalXPubs should not be included in the receiver\'s PSBT');
+  if (
+    payjoinPsbt.data.globalMap.globalXpub &&
+    (payjoinPsbt.data.globalMap.globalXpub as GlobalXpub[]).length > 0
+  ) {
+    throw new Error(
+      "GlobalXPubs should not be included in the receiver's PSBT",
+    );
   }
-  if (hasKeypathInformationSet(payjoinPsbt.data.outputs) || hasKeypathInformationSet(payjoinPsbt.data.inputs)) {
-    throw new Error(('Keypath information should not be included in the receiver\'s PSBT');
+  if (
+    hasKeypathInformationSet(payjoinPsbt.data.outputs) ||
+    hasKeypathInformationSet(payjoinPsbt.data.inputs)
+  ) {
+    throw new Error(
+      "Keypath information should not be included in the receiver's PSBT",
+    );
   }
 
   const sanityResult = checkSanity(payjoinPsbt);
-  if(Object.keys(sanityResult).length > 0){
-    throw new Error(`Receiver's PSBT is insane: ${JSON.stringify(sanityResult)}`);
+  if (Object.keys(sanityResult).length > 0) {
+    throw new Error(
+      `Receiver's PSBT is insane: ${JSON.stringify(sanityResult)}`,
+    );
   }
 
   // We make sure we don't sign what should not be signed
@@ -50,7 +77,7 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
     const outputLegacy = getGlobalTransaction(payjoinPsbt).outs[index];
     // Make sure only our output has any information
     delete output.bip32Derivation;
-    psbt.data.outputs.forEach(originalOutput => {
+    psbt.data.outputs.forEach((originalOutput): void => {
       // update the payjoin outputs
       if (
         outputLegacy.script.equals(
@@ -58,9 +85,9 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
           // Can we assume output will contain redeemScript and witnessScript?
           // If so, we could decompile scriptPubkey, RS, and WS, and search for
           // the pubkey and its hash160.
-          p2wpkh({
-            pubkey: originalOutput.bip32Derivation.pubkey,
-          }).output,
+          payments.p2wpkh({
+            pubkey: originalOutput.bip32Derivation![0].pubkey,
+          }).output!,
         )
       )
         payjoinPsbt.updateOutput(index, originalOutput);
@@ -79,14 +106,23 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
   // TODO: * check if the difference is due to adjusting fee to increase transaction size
 }
 
-export function requestPayjoin(psbt: Psbt, payjoinEndpoint: string) {
-  return requestPayjoinWithCustomRemoteCall(psbt, psbt1 => doRequest(psbt1, payjoinEndpoint));
+export async function requestPayjoin(
+  psbt: Psbt,
+  payjoinEndpoint: string,
+): Promise<void> {
+  return requestPayjoinWithCustomRemoteCall(
+    psbt,
+    (psbt1): Promise<Nullable<Psbt>> => doRequest(psbt1, payjoinEndpoint),
+  );
 }
 
 function checkSanity(psbt: Psbt): { [index: number]: string[] } {
   const result: { [index: number]: string[] } = {};
-  psbt.data.inputs.forEach((value, index) => {
-    const sanityResult = checkInputSanity(value, getGlobalTransaction(psbt).ins[index]);
+  psbt.data.inputs.forEach((value, index): void => {
+    const sanityResult = checkInputSanity(
+      value,
+      getGlobalTransaction(psbt).ins[index],
+    );
     if (sanityResult.length > 0) {
       result[index] = sanityResult;
     }
@@ -94,7 +130,7 @@ function checkSanity(psbt: Psbt): { [index: number]: string[] } {
   return result;
 }
 
-function checkInputSanity(input: PsbtInput, txInput: Input): string[] {
+function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
   const errors: string[] = [];
   if (isFinalized(input)) {
     if (input.partialSig && input.partialSig.length > 0) {
@@ -126,36 +162,61 @@ function checkInputSanity(input: PsbtInput, txInput: Input): string[] {
   }
 
   if (input.nonWitnessUtxo) {
-    //TODO: get hash
+    // TODO: get hash
     const prevOutTxId = input.nonWitnessUtxo;
     let validOutpoint = true;
 
-    if (txInput.hash != prevOutTxId) {
-      errors.push('non_witness_utxo does not match the transaction id referenced by the global transaction sign');
+    if (txInput.hash !== prevOutTxId) {
+      errors.push(
+        'non_witness_utxo does not match the transaction id referenced by the global transaction sign',
+      );
       validOutpoint = false;
     }
+    // @ts-ignore
     if (txInput.index >= input.nonWitnessUtxo.Outputs.length) {
-      errors.push('Global transaction referencing an out of bound output in non_witness_utxo');
+      errors.push(
+        'Global transaction referencing an out of bound output in non_witness_utxo',
+      );
       validOutpoint = false;
     }
     if (input.redeemScript && validOutpoint) {
-      if (input.redeemScript.Hash.ScriptPubKey != input.nonWitnessUtxo.Outputs[txInput.index].ScriptPubKey)
-        errors.push('The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo');
+      if (
+        // @ts-ignore
+        input.redeemScript.Hash.ScriptPubKey !==
+        // @ts-ignore
+        input.nonWitnessUtxo.Outputs[txInput.index].ScriptPubKey
+      )
+        errors.push(
+          'The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo',
+        );
     }
   }
 
   if (input.witnessUtxo) {
     if (input.redeemScript) {
-      if (input.redeemScript.Hash.ScriptPubKey != input.witnessUtxo.ScriptPubKey)
-        errors.push('The redeem_script is not coherent with the scriptPubKey of the witness_utxo');
-      if (input.witnessScript &&
+      if (
+        // @ts-ignore
+        input.redeemScript.Hash.ScriptPubKey !== input.witnessUtxo.ScriptPubKey
+      )
+        errors.push(
+          'The redeem_script is not coherent with the scriptPubKey of the witness_utxo',
+        );
+      if (
+        input.witnessScript &&
         input.redeemScript &&
-        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(input.redeemScript) != input.witnessScript.WitHash)
-        errors.push('witnessScript with witness UTXO does not match the redeemScript');
+        // @ts-ignore
+        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(
+          input.redeemScript,
+          // @ts-ignore
+        ) !== input.witnessScript.WitHash
+      )
+        errors.push(
+          'witnessScript with witness UTXO does not match the redeemScript',
+        );
     }
   }
 
-  //figure out how to port this lofic
+  // figure out how to port this lofic
   // if (input.witnessUtxo.ScriptPubKey is  Script s)
   // {
   //
@@ -165,18 +226,24 @@ function checkInputSanity(input: PsbtInput, txInput: Input): string[] {
   //   errors.push('A Witness UTXO is provided for a non-witness input');
   // }
 
-
   return errors;
 }
 
-
-function hasKeypathInformationSet(items: { bip32Derivation?: Bip32Derivation[] }[]): boolean {
-  return items.filter(value => value.bip32Derivation && value.bip32Derivation.length > 0).length > 0;
+function hasKeypathInformationSet(
+  items: { bip32Derivation?: Bip32Derivation[] }[],
+): boolean {
+  return (
+    items.filter(
+      (value): boolean =>
+        !!value.bip32Derivation && value.bip32Derivation.length > 0,
+    ).length > 0
+  );
 }
 
-function isFinalized(input: PsbtInput) {
-  return input.finalScriptSig !== undefined ||
-    input.finalScriptWitness !== undefined;
+function isFinalized(input: PsbtInput): boolean {
+  return (
+    input.finalScriptSig !== undefined || input.finalScriptWitness !== undefined
+  );
 }
 
 function getGlobalTransaction(psbt: Psbt): Transaction {
@@ -186,14 +253,17 @@ function getGlobalTransaction(psbt: Psbt): Transaction {
   return psbt.__CACHE.__TX;
 }
 
-function doRequest(psbt: Psbt, payjoinEndpoint: string): Promise<Nullable<Psbt>> {
-  return new Promise<Nullable<Psbt>>((resolve, reject) => {
+function doRequest(
+  psbt: Psbt,
+  payjoinEndpoint: string,
+): Promise<Nullable<Psbt>> {
+  return new Promise<Nullable<Psbt>>((resolve, reject): void => {
     if (!psbt) {
       reject();
     }
 
     const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
+    xhr.onreadystatechange = (): void => {
       if (xhr.readyState !== 4) return;
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(Psbt.fromHex(xhr.responseText));

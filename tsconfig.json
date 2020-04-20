@@ -1,31 +1,32 @@
 {
   "compilerOptions": {
-    "allowJs": false,
-    "alwaysStrict": true,
-    "declaration": true,
-    "declarationDir": "./types",
-    "esModuleInterop": false,
-    "lib": [
-      "es2017",
-      "dom"
-    ],
-    "module": "commonjs",
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "outDir": "./src",
-    "rootDir": "./ts-src",
-    "strict": true,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
     "target": "es2017",
+    "module": "commonjs",
+    "outDir": "./src",
+    "declaration": true,
+    "rootDir": "./ts_src",
     "types": [
-      "node"
-    ]
+      "node",
+      "jest"
+    ],
+    "allowJs": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "esModuleInterop": false,
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true
   },
   "include": [
-      "ts-src/*.ts"
+      "ts_src/**/*.ts",
+      "ts_src/**/*.json"
   ],
   "exclude": [
       "**/*.spec.ts",
