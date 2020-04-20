@@ -39,6 +39,7 @@
   ],
   "dependencies": {
     "@types/node": "^13.13.0",
+    "bip174": "^1.0.1",
     "bitcoinjs-lib": "^5.1.7"
   },
   "devDependencies": {
