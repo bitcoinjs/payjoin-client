@@ -1,6 +1,7 @@
 import { Psbt, Transaction } from 'bitcoinjs-lib';
 import { p2wpkh } from 'bitcoinjs-lib/types/payments';
-import { GlobalXpub, PsbtInput } from 'bip174/src/lib/interfaces';
+import { Bip32Derivation, GlobalXpub, PsbtInput } from 'bip174/src/lib/interfaces';
+import { Input } from 'bitcoinjs-lib/types/transaction';
 
 type Nullable<T> = T | null;
 
@@ -25,19 +26,20 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
     throw new Error('There were less inputs than before in the receiver\'s PSBT');
   }
 
-  if(payjoinPsbt.data.globalMap.globalXpub && (payjoinPsbt.data.globalMap.globalXpub as GlobalXpub[]).length > 0){
+  if (payjoinPsbt.data.globalMap.globalXpub && (payjoinPsbt.data.globalMap.globalXpub as GlobalXpub[]).length > 0) {
     throw new Error('GlobalXPubs should not be included in the receiver\'s PSBT');
   }
-  if (payjoinPsbt.data.outputs.filter(value => value.bip32Derivation && value.bip32Derivation.length>0).length > 0 ||
-    payjoinPsbt.data.inputs.filter(value => value.bip32Derivation && value.bip32Derivation.length>0).length > 0 )
-  {
+  if (hasKeypathInformationSet(payjoinPsbt.data.outputs) || hasKeypathInformationSet(payjoinPsbt.data.inputs)) {
     throw new Error(('Keypath information should not be included in the receiver\'s PSBT');
   }
+
+  // TODO: check sanity
+
 
   // We make sure we don't sign what should not be signed
   for (let index = 0; index < payjoinPsbt.inputCount; index++) {
     // check if input is Finalized
-    if ( isFinalized(payjoinPsbt.data.inputs[index]))
+    if (isFinalized(payjoinPsbt.data.inputs[index]))
       payjoinPsbt.clearFinalizedInput(index);
   }
 
@@ -77,6 +79,94 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
 
 export function requestPayjoin(psbt: Psbt, payjoinEndpoint: string) {
   return requestPayjoinWithCustomRemoteCall(psbt, psbt1 => doRequest(psbt1, payjoinEndpoint));
+}
+
+function checkSanity(psbt: Psbt): boolean {
+  return psbt.data.inputs.filter(value => !checkInputSanity(value)).length === 0;
+}
+
+function checkInputSanity(input: PsbtInput, txInput: Input): boolean {
+  const errors: string[] = [];
+  if (isFinalized(input)) {
+    if (input.partialSig && input.partialSig.length > 0) {
+      errors.push('Input finalized, but partial sigs are not empty');
+    }
+    if (input.bip32Derivation && input.bip32Derivation.length > 0) {
+      errors.push('Input finalized, but hd keypaths are not empty');
+    }
+    if (input.sighashType) {
+      errors.push('Input finalized, but sighash type is not null');
+    }
+    if (input.redeemScript) {
+      errors.push('Input finalized, but redeem script is not null');
+    }
+    if (input.witnessScript) {
+      errors.push('Input finalized, but witness script is not null');
+    }
+  }
+  if (input.witnessUtxo && input.nonWitnessUtxo) {
+    errors.push('witness utxo and non witness utxo simultaneously present');
+  }
+
+  if (input.witnessScript && !input.witnessUtxo) {
+    errors.push('witness script present but no witness utxo');
+  }
+
+  if (!input.finalScriptWitness && !input.witnessUtxo){
+    errors.push('final witness script present but no witness utxo');
+  }
+
+  if(input.nonWitnessUtxo){
+    //TODO: get hash
+    const prevOutTxId = input.nonWitnessUtxo;
+    let validOutpoint = true;
+
+    if (txInput.hash != prevOutTxId) {
+      errors.push('non_witness_utxo does not match the transaction id referenced by the global transaction sign');
+      validOutpoint = false;
+    }
+    if (txInput.index >= input.nonWitnessUtxo.Outputs.length) {
+      errors.push('Global transaction referencing an out of bound output in non_witness_utxo');
+      validOutpoint = false;
+    }
+    if (input.redeemScript && validOutpoint) {
+      if (input.redeemScript.Hash.ScriptPubKey != NonWitnessUtxo.Outputs[TxIn.PrevOut.N].ScriptPubKey)
+        errors.Add(new PSBTError(Index, 'The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo'));
+    }
+  }
+
+  if (witness_utxo != null) {
+    if (redeem_script != null) {
+      if (redeem_script.Hash.ScriptPubKey != witness_utxo.ScriptPubKey)
+        errors.Add(new PSBTError(Index, 'The redeem_script is not coherent with the scriptPubKey of the witness_utxo'));
+      if (witness_script != null &&
+        redeem_script != null &&
+        PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(redeem_script) != witness_script.WitHash)
+        errors.Add(new PSBTError(Index, 'witnessScript with witness UTXO does not match the redeemScript'));
+    }
+  }
+
+  if (witness_utxo?.ScriptPubKey is;
+  Script;
+  s;
+)
+  {
+    if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
+      errors.Add(new PSBTError(Index, 'A Witness UTXO is provided for a non-witness input'));
+    if (s.IsScriptType(ScriptType.P2SH) && redeem_script is;
+    Script;
+    r && !r.IsScriptType(ScriptType.Witness);
+  )
+    errors.Add(new PSBTError(Index, 'A Witness UTXO is provided for a non-witness input'));
+  }
+
+
+  return true;
+}
+
+
+function hasKeypathInformationSet(items: { bip32Derivation?: Bip32Derivation[] }[]): boolean {
+  return items.filter(value => value.bip32Derivation && value.bip32Derivation.length > 0).length > 0;
 }
 
 function isFinalized(input: PsbtInput) {
