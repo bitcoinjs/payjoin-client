@@ -1,6 +1,6 @@
 import { Psbt, Transaction } from 'bitcoinjs-lib';
 import { p2wpkh } from 'bitcoinjs-lib/types/payments';
-import { PsbtInput } from 'bip174/src/lib/interfaces';
+import { GlobalXpub, PsbtInput } from 'bip174/src/lib/interfaces';
 
 type Nullable<T> = T | null;
 
@@ -18,15 +18,21 @@ export async function requestPayjoinWithCustomRemoteCall(psbt: Psbt, remoteCall:
   delete clonedPsbt.data.globalMap.globalXpub;
 
   const payjoinPsbt = await remoteCall(clonedPsbt);
-  if (!payjoinPsbt) return null;
+  if (!payjoinPsbt) throw new Error('We did not get the receiver\'s PSBT');
 
   // no inputs were added?
   if (clonedPsbt.inputCount <= payjoinPsbt.inputCount) {
-    return null;
+    throw new Error('There were less inputs than before in the receiver\'s PSBT');
   }
 
-  if(clonedPsbt.data.globalMap.globalXpub !== undefined && clonedPsbt.data.globalMap.globalXpub.length > 0)
-
+  if(payjoinPsbt.data.globalMap.globalXpub && (payjoinPsbt.data.globalMap.globalXpub as GlobalXpub[]).length > 0){
+    throw new Error('GlobalXPubs should not be included in the receiver\'s PSBT');
+  }
+  if (payjoinPsbt.data.outputs.filter(value => value.bip32Derivation && value.bip32Derivation.length>0).length > 0 ||
+    payjoinPsbt.data.inputs.filter(value => value.bip32Derivation && value.bip32Derivation.length>0).length > 0 )
+  {
+    throw new Error(('Keypath information should not be included in the receiver\'s PSBT');
+  }
 
   // We make sure we don't sign what should not be signed
   for (let index = 0; index < payjoinPsbt.inputCount; index++) {
