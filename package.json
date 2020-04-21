@@ -35,7 +35,9 @@
     "src"
   ],
   "dependencies": {
-    "bitcoinjs-lib": "^5.1.7"
+    "@types/isomorphic-fetch": "0.0.35",
+    "bitcoinjs-lib": "^5.1.7",
+    "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
     "@types/jest": "^25.2.1",

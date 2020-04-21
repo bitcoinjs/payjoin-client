@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 const bitcoinjs_lib_1 = require('bitcoinjs-lib');
+const fetch = require('isomorphic-fetch');
 async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
@@ -219,22 +220,20 @@ function getGlobalTransaction(psbt) {
   // @ts-ignore
   return psbt.__CACHE.__TX;
 }
-function doRequest(psbt, payjoinEndpoint) {
-  return new Promise((resolve, reject) => {
-    if (!psbt) {
-      reject();
-    }
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(bitcoinjs_lib_1.Psbt.fromHex(xhr.responseText));
-      } else {
-        reject(xhr.responseText);
-      }
-    };
-    xhr.setRequestHeader('Content-Type', 'text/plain');
-    xhr.open('POST', payjoinEndpoint);
-    xhr.send(psbt.toHex());
+async function doRequest(psbt, payjoinEndpoint) {
+  if (!psbt) {
+    throw new Error();
+  }
+  const response = await fetch(payjoinEndpoint, {
+    method: 'POST',
+    headers: new Headers({
+      'Content-Type': 'text/plain',
+    }),
+    body: psbt.toHex(),
   });
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(responseText);
+  }
+  return bitcoinjs_lib_1.Psbt.fromBase64(responseText);
 }

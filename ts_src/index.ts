@@ -4,6 +4,7 @@ import {
   GlobalXpub,
   PsbtInput,
 } from 'bip174/src/lib/interfaces';
+import * as fetch from 'isomorphic-fetch';
 
 type Nullable<T> = T | null;
 
@@ -254,26 +255,26 @@ function getGlobalTransaction(psbt: Psbt): Transaction {
   return psbt.__CACHE.__TX;
 }
 
-function doRequest(
+async function doRequest(
   psbt: Psbt,
   payjoinEndpoint: string,
 ): Promise<Nullable<Psbt>> {
-  return new Promise<Nullable<Psbt>>((resolve, reject): void => {
-    if (!psbt) {
-      reject();
-    }
+  if (!psbt) {
+    throw new Error();
+  }
 
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = (): void => {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(Psbt.fromHex(xhr.responseText));
-      } else {
-        reject(xhr.responseText);
-      }
-    };
-    xhr.setRequestHeader('Content-Type', 'text/plain');
-    xhr.open('POST', payjoinEndpoint);
-    xhr.send(psbt.toHex());
+  const response = await fetch(payjoinEndpoint, {
+    method: 'POST',
+    headers: new Headers({
+      'Content-Type': 'text/plain',
+    }),
+    body: psbt.toHex(),
   });
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(responseText);
+  }
+
+  return Psbt.fromBase64(responseText);
 }
