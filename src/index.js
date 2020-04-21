@@ -31,6 +31,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       "Keypath information should not be included in the receiver's PSBT",
     );
   }
+  const ourInputIndexes = [];
   // Add back input data from the original psbt (such as witnessUtxo)
   for (const [index, originalInput] of getGlobalTransaction(
     clonedPsbt,
@@ -45,7 +46,14 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
         `Receiver's PSBT is missing input #${index} from the sent PSBT`,
       );
     }
+    if (
+      originalInput.sequence !==
+      getGlobalTransaction(payjoinPsbt).ins[payjoinIndex].sequence
+    ) {
+      throw new Error(`Inputs from original PSBT have a different sequence`);
+    }
     payjoinPsbt.updateInput(payjoinIndex, clonedPsbt.data.inputs[index]);
+    ourInputIndexes.push(payjoinIndex);
   }
   const sanityResult = checkSanity(payjoinPsbt);
   if (Object.keys(sanityResult).length > 0) {
@@ -56,8 +64,16 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   // We make sure we don't sign what should not be signed
   for (let index = 0; index < payjoinPsbt.inputCount; index++) {
     // check if input is Finalized
-    if (isFinalized(payjoinPsbt.data.inputs[index]))
-      payjoinPsbt.clearFinalizedInput(index);
+    const ourInput = ourInputIndexes.indexOf(index) !== -1;
+    if (isFinalized(payjoinPsbt.data.inputs[index])) {
+      if (ourInput) {
+        throw new Error(
+          `Receiver's PSBT included a finalized input from original PSBT `,
+        );
+      } else {
+        payjoinPsbt.clearFinalizedInput(index);
+      }
+    }
   }
   for (let index = 0; index < payjoinPsbt.data.outputs.length; index++) {
     const output = payjoinPsbt.data.outputs[index];
@@ -92,12 +108,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   ) {
     throw new Error('The LockTime field of the transaction has been modified');
   }
-  // TODO: check payjoinPsbt.inputs where input belongs to us, that it is not finalized
-  // TODO: check payjoinPsbt.inputs where input belongs to us, that it is was included in psbt.inputs
-  // TODO: check payjoinPsbt.inputs where input belongs to us, that its sequence has not changed from that of psbt.inputs
-  // TODO: check payjoinPsbt.inputs where input is new, that it is finalized
   // TODO: check payjoinPsbt.inputs where input is new, that it is the same type as all other inputs from psbt.inputs (all==P2WPKH || all = P2SH-P2WPKH)
-  // TODO: check psbt.inputs that payjoinPsbt.inputs contains them all
   // TODO: check payjoinPsbt.inputs > psbt.inputs
   // TODO: check that if spend amount of payjoinPsbt > spend amount of psbt:
   // TODO: * check if the difference is due to adjusting fee to increase transaction size
