@@ -40,6 +40,11 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       originalInput.hash,
       originalInput.index,
     );
+    if (payjoinIndex === -1) {
+      throw new Error(
+        `Receiver's PSBT is missing input #${index} from the sent PSBT`,
+      );
+    }
     payjoinPsbt.updateInput(payjoinIndex, clonedPsbt.data.inputs[index]);
   }
   const sanityResult = checkSanity(payjoinPsbt);
