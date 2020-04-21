@@ -73,6 +73,8 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       } else {
         payjoinPsbt.clearFinalizedInput(index);
       }
+    } else if (!ourInput) {
+      throw new Error(`Receiver's PSBT included a non-finalized new input`);
     }
   }
   for (let index = 0; index < payjoinPsbt.data.outputs.length; index++) {
