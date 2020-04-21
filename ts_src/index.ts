@@ -11,7 +11,7 @@ type Nullable<T> = T | null;
 export async function requestPayjoinWithCustomRemoteCall(
   psbt: Psbt,
   remoteCall: (psbt: Psbt) => Promise<Nullable<Psbt>>,
-): Promise<void> {
+): Promise<Psbt> {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
 
@@ -120,12 +120,14 @@ export async function requestPayjoinWithCustomRemoteCall(
   // TODO: check payjoinPsbt.inputs > psbt.inputs
   // TODO: check that if spend amount of payjoinPsbt > spend amount of psbt:
   // TODO: * check if the difference is due to adjusting fee to increase transaction size
+
+  return payjoinPsbt;
 }
 
 export async function requestPayjoin(
   psbt: Psbt,
   payjoinEndpoint: string,
-): Promise<void> {
+): Promise<Psbt> {
   return requestPayjoinWithCustomRemoteCall(
     psbt,
     (psbt1): Promise<Nullable<Psbt>> => doRequest(psbt1, payjoinEndpoint),

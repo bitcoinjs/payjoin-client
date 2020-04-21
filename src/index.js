@@ -101,6 +101,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   // TODO: check payjoinPsbt.inputs > psbt.inputs
   // TODO: check that if spend amount of payjoinPsbt > spend amount of psbt:
   // TODO: * check if the difference is due to adjusting fee to increase transaction size
+  return payjoinPsbt;
 }
 exports.requestPayjoinWithCustomRemoteCall = requestPayjoinWithCustomRemoteCall;
 async function requestPayjoin(psbt, payjoinEndpoint) {
