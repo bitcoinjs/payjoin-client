@@ -31,7 +31,17 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       "Keypath information should not be included in the receiver's PSBT",
     );
   }
-  // TODO: add back input data from the original psbt (such as witnessUtxo)
+  // Add back input data from the original psbt (such as witnessUtxo)
+  for (const [index, originalInput] of getGlobalTransaction(
+    clonedPsbt,
+  ).ins.entries()) {
+    const payjoinIndex = getInputIndex(
+      payjoinPsbt,
+      originalInput.hash,
+      originalInput.index,
+    );
+    payjoinPsbt.updateInput(payjoinIndex, clonedPsbt.data.inputs[index]);
+  }
   const sanityResult = checkSanity(payjoinPsbt);
   if (Object.keys(sanityResult).length > 0) {
     throw new Error(
@@ -219,6 +229,17 @@ function getGlobalTransaction(psbt) {
   // instead of using private (JS has no private) attributes
   // @ts-ignore
   return psbt.__CACHE.__TX;
+}
+function getInputIndex(psbt, prevOutHash, prevOutIndex) {
+  for (const [index, input] of getGlobalTransaction(psbt).ins.entries()) {
+    if (
+      Buffer.compare(input.hash, prevOutHash) === 0 &&
+      input.index === prevOutIndex
+    ) {
+      return index;
+    }
+  }
+  return -1;
 }
 async function doRequest(psbt, payjoinEndpoint) {
   if (!psbt) {
