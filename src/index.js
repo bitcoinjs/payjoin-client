@@ -31,6 +31,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       "Keypath information should not be included in the receiver's PSBT",
     );
   }
+  // TODO: add back input data from the original psbt (such as witnessUtxo)
   const sanityResult = checkSanity(payjoinPsbt);
   if (Object.keys(sanityResult).length > 0) {
     throw new Error(
@@ -183,10 +184,9 @@ function checkInputSanity(input, txInput) {
         );
     }
   }
-  // figure out how to port this lofic
+  // TODO: if witnessUtxo is p2sh
   // if (input.witnessUtxo.ScriptPubKey is  Script s)
   // {
-  //
   //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
   //     errors.push('A Witness UTXO is provided for a non-witness input');
   //   if (s.IsScriptType(ScriptType.P2SH) && redeem_script is Script r && !r.IsScriptType(ScriptType.Witness))

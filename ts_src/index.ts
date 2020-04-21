@@ -44,7 +44,7 @@ export async function requestPayjoinWithCustomRemoteCall(
     );
   }
 
-  //TODO: add back input data from the original psbt (such as witnessUtxo)
+  // TODO: add back input data from the original psbt (such as witnessUtxo)
   const sanityResult = checkSanity(payjoinPsbt);
   if (Object.keys(sanityResult).length > 0) {
     throw new Error(
@@ -211,7 +211,7 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
     }
   }
 
-  // TODO: if witnessUtxo is p2sh 
+  // TODO: if witnessUtxo is p2sh
   // if (input.witnessUtxo.ScriptPubKey is  Script s)
   // {
   //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
