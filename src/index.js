@@ -112,7 +112,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   }
   if (payjoinPsbt.data.inputs.length <= psbt.data.inputs.length) {
     throw new Error(
-      `Receiver's PSBT contains the same number of inputs as the sent PSBT`,
+      `Receiver's PSBT should have more inputs than the sent PSBT`,
     );
   }
   // TODO: check payjoinPsbt.inputs where input is new, that it is the same type as all other inputs from psbt.inputs (all==P2WPKH || all = P2SH-P2WPKH)
