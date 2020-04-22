@@ -49,7 +49,9 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       getInputsScriptPubKeyType(clonedPsbt),
     ) === -1
   ) {
-    throw new Error('Inputs used do not support payjoin');
+    throw new Error(
+      'Inputs used do not support payjoin (need to be segwit and need to be all the same)',
+    );
   }
   // We make sure we don't send unnecessary information to the receiver
   for (let index = 0; index < clonedPsbt.inputCount; index++) {
