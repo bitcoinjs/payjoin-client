@@ -31,6 +31,22 @@ export const supportedWalletFormats = [
   ScriptPubKeyType.SegwitP2SH,
 ];
 
+// The following is lifted straight from:
+// https://github.com/bitcoinjs/bitcoinjs-lib/blob/f67aab371c1d47684b3c211643a39e8e0295b306/src/psbt.js
+// Seems pretty useful, maybe we should export classifyScript() from bitcoinjs-lib?
+function isPaymentFactory(payment: any): (script: Buffer) => boolean {
+  return (script: Buffer): boolean => {
+    try {
+      payment({ output: script });
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+}
+const isP2WPKH = isPaymentFactory(payments.p2wpkh);
+const isP2WSHScript = isPaymentFactory(payments.p2wsh);
+
 export async function requestPayjoinWithCustomRemoteCall(
   psbt: Psbt,
   remoteCall: (psbt: Psbt) => Promise<Nullable<Psbt>>,
@@ -301,13 +317,10 @@ function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
 
   let result: Nullable<ScriptPubKeyType> = null;
 
-  for (let i = 0; i < psbt.data.inputs.length; i++) {
-    const input = psbt.data.inputs[i];
-    const type = getInputScriptPubKeyType(
-      input,
-      getGlobalTransaction(psbt).ins[i],
-    );
-    if (type == null || type !== result) {
+  for (const input of psbt.data.inputs) {
+    const inputScript = input.witnessUtxo!.script;
+    const type = getInputScriptPubKeyType(inputScript);
+    if (type == null || (result !== null && type !== result)) {
       return null;
     }
     result = type;
@@ -315,18 +328,19 @@ function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
   return result;
 }
 
+// TODO: I think these checks are correct, get Jon to double check they do what
+// I think they do...
+// There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
 function getInputScriptPubKeyType(
-  _input: PsbtInput,
-  _txIn: TxInput,
+  inputScript: Buffer,
 ): Nullable<ScriptPubKeyType> {
-  // TODO: halp!
+  if (isP2WPKH(inputScript)) {
+    return ScriptPubKeyType.Segwit;
+  } else if (isP2WSHScript(inputScript)) {
+    return ScriptPubKeyType.SegwitP2SH;
+  }
 
-  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2WPKH))
-  // return ScriptPubKeyType.Segwit;
-  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2SH) &&
-  //     PayToWitPubKeyHashTemplate.Instance.ExtractWitScriptParameters(i.FinalScriptWitness) is {})
-  // return ScriptPubKeyType.SegwitP2SH;
-  return null;
+  return ScriptPubKeyType.Legacy;
 }
 
 function redeemScriptToScriptPubkey(redeemScript: Buffer): Buffer {

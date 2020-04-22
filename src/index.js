@@ -24,6 +24,21 @@ exports.supportedWalletFormats = [
   ScriptPubKeyType.Segwit,
   ScriptPubKeyType.SegwitP2SH,
 ];
+// The following is lifted straight from:
+// https://github.com/bitcoinjs/bitcoinjs-lib/blob/f67aab371c1d47684b3c211643a39e8e0295b306/src/psbt.js
+// Seems pretty useful, maybe we should export classifyScript() from bitcoinjs-lib?
+function isPaymentFactory(payment) {
+  return (script) => {
+    try {
+      payment({ output: script });
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+}
+const isP2WPKH = isPaymentFactory(bitcoinjs_lib_1.payments.p2wpkh);
+const isP2WSHScript = isPaymentFactory(bitcoinjs_lib_1.payments.p2wsh);
 async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
@@ -265,27 +280,26 @@ function getInputsScriptPubKeyType(psbt) {
   )
     throw new Error('The psbt should be finalized with witness information');
   let result = null;
-  for (let i = 0; i < psbt.data.inputs.length; i++) {
-    const input = psbt.data.inputs[i];
-    const type = getInputScriptPubKeyType(
-      input,
-      getGlobalTransaction(psbt).ins[i],
-    );
-    if (type == null || type !== result) {
+  for (const input of psbt.data.inputs) {
+    const inputScript = input.witnessUtxo.script;
+    const type = getInputScriptPubKeyType(inputScript);
+    if (type == null || (result !== null && type !== result)) {
       return null;
     }
     result = type;
   }
   return result;
 }
-function getInputScriptPubKeyType(_input, _txIn) {
-  // TODO: halp!
-  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2WPKH))
-  // return ScriptPubKeyType.Segwit;
-  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2SH) &&
-  //     PayToWitPubKeyHashTemplate.Instance.ExtractWitScriptParameters(i.FinalScriptWitness) is {})
-  // return ScriptPubKeyType.SegwitP2SH;
-  return null;
+// TODO: I think these checks are correct, get Jon to double check they do what
+// I think they do...
+// There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
+function getInputScriptPubKeyType(inputScript) {
+  if (isP2WPKH(inputScript)) {
+    return ScriptPubKeyType.Segwit;
+  } else if (isP2WSHScript(inputScript)) {
+    return ScriptPubKeyType.SegwitP2SH;
+  }
+  return ScriptPubKeyType.Legacy;
 }
 function redeemScriptToScriptPubkey(redeemScript) {
   return bitcoinjs_lib_1.payments.p2sh({ redeem: { output: redeemScript } })
