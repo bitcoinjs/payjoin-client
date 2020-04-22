@@ -13,7 +13,9 @@ console.log(`psbtBase64:\n${psbtBase64}`);
 
 psbt = bitcoin.Psbt.fromBase64(psbtBase64);
 
-console.log("Executing requestPayjoin()...");
+console.log("\nExecuting requestPayjoin()...");
 payjoinClient.requestPayjoin(psbt, endpoint)
-  .then(console.log)
+  .then(psbt => {
+    console.log(`\nPayJoin PSBT:\n${psbt.toBase64()}`);
+  })
   .catch(console.error)
