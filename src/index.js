@@ -101,6 +101,10 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       throw new Error(`Inputs from original PSBT have a different sequence`);
     }
     payjoinPsbt.updateInput(payjoinIndex, clonedPsbt.data.inputs[index]);
+    const payjoinPsbtInput = payjoinPsbt.data.inputs[payjoinIndex];
+    delete payjoinPsbtInput.partialSig;
+    delete payjoinPsbtInput.finalScriptSig;
+    delete payjoinPsbtInput.finalScriptWitness;
     ourInputIndexes.push(payjoinIndex);
   }
   const sanityResult = checkSanity(payjoinPsbt);
