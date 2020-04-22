@@ -295,7 +295,7 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
 function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
   if (
     !isAllFinalized(psbt) ||
-    psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0
+    psbt.data.inputs.filter((i): boolean => !i.witnessUtxo).length > 0
   )
     throw new Error('The psbt should be finalized with witness information');
 
