@@ -115,6 +115,13 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
     const ourInput = ourInputIndexes.indexOf(index) !== -1;
     if (isFinalized(payjoinPsbt.data.inputs[index])) {
       if (ourInput) {
+        const originalInputs = clonedPsbt.data.inputs;
+        const payjoinInputs = payjoinPsbt.data.inputs;
+        const input = payjoinInputs[index];
+        console.log('originalInputs', originalInputs);
+        console.log('payjoinInputs', payjoinInputs);
+        console.log('index', index);
+        console.log('input', input);
         throw new Error(
           `Receiver's PSBT included a finalized input from original PSBT `,
         );
