@@ -8,12 +8,44 @@ import * as fetch from 'isomorphic-fetch';
 
 type Nullable<T> = T | null;
 
+enum ScriptPubKeyType {
+  /// <summary>
+  /// Derive P2PKH addresses (P2PKH)
+  /// Only use this for legacy code or coins not supporting segwit
+  /// </summary>
+  Legacy,
+  /// <summary>
+  /// Derive Segwit (Bech32) addresses (P2WPKH)
+  /// This will result in the cheapest fees. This is the recommended choice.
+  /// </summary>
+  Segwit,
+  /// <summary>
+  /// Derive P2SH address of a Segwit address (P2WPKH-P2SH)
+  /// Use this when you worry that your users do not support Bech address format.
+  /// </summary>
+  SegwitP2SH,
+}
+
+export const supportedWalletFormats = [
+  ScriptPubKeyType.Segwit,
+  ScriptPubKeyType.SegwitP2SH,
+];
+
 export async function requestPayjoinWithCustomRemoteCall(
   psbt: Psbt,
   remoteCall: (psbt: Psbt) => Promise<Nullable<Psbt>>,
 ): Promise<Psbt> {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
+  const originalType = getInputsScriptPubKeyType(clonedPsbt);
+  if (
+    !originalType ||
+    supportedWalletFormats.indexOf(
+      getInputsScriptPubKeyType(clonedPsbt) as ScriptPubKeyType,
+    ) === -1
+  ) {
+    throw new Error('Inputs used do not support payjoin');
+  }
 
   // We make sure we don't send unnecessary information to the receiver
   for (let index = 0; index < clonedPsbt.inputCount; index++) {
@@ -260,6 +292,43 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
   return errors;
 }
 
+function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
+  if (
+    !isAllFinalized(psbt) ||
+    psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0
+  )
+    throw new Error('The psbt should be finalized with witness information');
+
+  let result: Nullable<ScriptPubKeyType> = null;
+
+  for (let i = 0; i < psbt.data.inputs.length; i++) {
+    const input = psbt.data.inputs[i];
+    const type = getInputScriptPubKeyType(
+      input,
+      getGlobalTransaction(psbt).ins[i],
+    );
+    if (type == null || type !== result) {
+      return null;
+    }
+    result = type;
+  }
+  return result;
+}
+
+function getInputScriptPubKeyType(
+  _input: PsbtInput,
+  _txIn: TxInput,
+): Nullable<ScriptPubKeyType> {
+  // TODO: halp!
+
+  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2WPKH))
+  // return ScriptPubKeyType.Segwit;
+  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2SH) &&
+  //     PayToWitPubKeyHashTemplate.Instance.ExtractWitScriptParameters(i.FinalScriptWitness) is {})
+  // return ScriptPubKeyType.SegwitP2SH;
+  return null;
+}
+
 function redeemScriptToScriptPubkey(redeemScript: Buffer): Buffer {
   return payments.p2sh({ redeem: { output: redeemScript } }).output!;
 }
@@ -283,6 +352,15 @@ function isFinalized(input: PsbtInput): boolean {
   return (
     input.finalScriptSig !== undefined || input.finalScriptWitness !== undefined
   );
+}
+
+function isAllFinalized(psbt: Psbt): boolean {
+  for (const input of psbt.data.inputs) {
+    if (!isFinalized(input)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function getGlobalTransaction(psbt: Psbt): Transaction {

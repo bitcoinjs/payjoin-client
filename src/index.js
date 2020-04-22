@@ -2,9 +2,40 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 const bitcoinjs_lib_1 = require('bitcoinjs-lib');
 const fetch = require('isomorphic-fetch');
+var ScriptPubKeyType;
+(function (ScriptPubKeyType) {
+  /// <summary>
+  /// Derive P2PKH addresses (P2PKH)
+  /// Only use this for legacy code or coins not supporting segwit
+  /// </summary>
+  ScriptPubKeyType[(ScriptPubKeyType['Legacy'] = 0)] = 'Legacy';
+  /// <summary>
+  /// Derive Segwit (Bech32) addresses (P2WPKH)
+  /// This will result in the cheapest fees. This is the recommended choice.
+  /// </summary>
+  ScriptPubKeyType[(ScriptPubKeyType['Segwit'] = 1)] = 'Segwit';
+  /// <summary>
+  /// Derive P2SH address of a Segwit address (P2WPKH-P2SH)
+  /// Use this when you worry that your users do not support Bech address format.
+  /// </summary>
+  ScriptPubKeyType[(ScriptPubKeyType['SegwitP2SH'] = 2)] = 'SegwitP2SH';
+})(ScriptPubKeyType || (ScriptPubKeyType = {}));
+exports.supportedWalletFormats = [
+  ScriptPubKeyType.Segwit,
+  ScriptPubKeyType.SegwitP2SH,
+];
 async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
+  const originalType = getInputsScriptPubKeyType(clonedPsbt);
+  if (
+    !originalType ||
+    exports.supportedWalletFormats.indexOf(
+      getInputsScriptPubKeyType(clonedPsbt),
+    ) === -1
+  ) {
+    throw new Error('Inputs used do not support payjoin');
+  }
   // We make sure we don't send unnecessary information to the receiver
   for (let index = 0; index < clonedPsbt.inputCount; index++) {
     clonedPsbt.clearFinalizedInput(index);
@@ -227,6 +258,35 @@ function checkInputSanity(input, txInput) {
   // }
   return errors;
 }
+function getInputsScriptPubKeyType(psbt) {
+  if (
+    !isAllFinalized(psbt) ||
+    psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0
+  )
+    throw new Error('The psbt should be finalized with witness information');
+  let result = null;
+  for (let i = 0; i < psbt.data.inputs.length; i++) {
+    const input = psbt.data.inputs[i];
+    const type = getInputScriptPubKeyType(
+      input,
+      getGlobalTransaction(psbt).ins[i],
+    );
+    if (type == null || type !== result) {
+      return null;
+    }
+    result = type;
+  }
+  return result;
+}
+function getInputScriptPubKeyType(_input, _txIn) {
+  // TODO: halp!
+  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2WPKH))
+  // return ScriptPubKeyType.Segwit;
+  // if (input.witnessUtxo.ScriptPubKey.IsScriptType(ScriptType.P2SH) &&
+  //     PayToWitPubKeyHashTemplate.Instance.ExtractWitScriptParameters(i.FinalScriptWitness) is {})
+  // return ScriptPubKeyType.SegwitP2SH;
+  return null;
+}
 function redeemScriptToScriptPubkey(redeemScript) {
   return bitcoinjs_lib_1.payments.p2sh({ redeem: { output: redeemScript } })
     .output;
@@ -246,6 +306,14 @@ function isFinalized(input) {
   return (
     input.finalScriptSig !== undefined || input.finalScriptWitness !== undefined
   );
+}
+function isAllFinalized(psbt) {
+  for (const input of psbt.data.inputs) {
+    if (!isFinalized(input)) {
+      return false;
+    }
+  }
+  return true;
 }
 function getGlobalTransaction(psbt) {
   // TODO: bitcoinjs-lib to expose outputs to Psbt class
