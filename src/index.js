@@ -110,8 +110,12 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   ) {
     throw new Error('The LockTime field of the transaction has been modified');
   }
+  if (payjoinPsbt.data.inputs.length <= psbt.data.inputs.length) {
+    throw new Error(
+      `Receiver's PSBT contains the same number of inputs as the sent PSBT`,
+    );
+  }
   // TODO: check payjoinPsbt.inputs where input is new, that it is the same type as all other inputs from psbt.inputs (all==P2WPKH || all = P2SH-P2WPKH)
-  // TODO: check payjoinPsbt.inputs > psbt.inputs
   // TODO: check that if spend amount of payjoinPsbt > spend amount of psbt:
   // TODO: * check if the difference is due to adjusting fee to increase transaction size
   return payjoinPsbt;
