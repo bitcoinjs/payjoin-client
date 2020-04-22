@@ -25,7 +25,8 @@
     "prettier": "prettier 'ts_src/**/*.ts' --ignore-path ./.prettierignore",
     "prettierjs": "prettier 'src/**/*.js' --ignore-path ./.prettierignore",
     "test": "npm run build && npm run format:ci && npm run lint && npm run unit",
-    "unit": "jest --config=jest.json --runInBand"
+    "unit": "jest --config=jest.json --runInBand",
+    "tryme": "node bin/tryme.js"
   },
   "repository": {
     "type": "git",
