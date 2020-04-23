@@ -87,9 +87,7 @@ export async function requestPayjoinWithCustomRemoteCall(
 
   const ourInputIndexes: number[] = [];
   // Add back input data from the original psbt (such as witnessUtxo)
-  for (const [index, originalInput] of getGlobalTransaction(
-    clonedPsbt,
-  ).ins.entries()) {
+  getGlobalTransaction(clonedPsbt).ins.forEach((originalInput, index): void => {
     const payjoinIndex = getInputIndex(
       payjoinPsbt,
       originalInput.hash,
@@ -116,7 +114,7 @@ export async function requestPayjoinWithCustomRemoteCall(
     delete payjoinPsbtInput.finalScriptWitness;
 
     ourInputIndexes.push(payjoinIndex);
-  }
+  });
 
   const sanityResult = checkSanity(payjoinPsbt);
   if (Object.keys(sanityResult).length > 0) {
