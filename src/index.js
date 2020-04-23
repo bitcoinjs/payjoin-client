@@ -178,11 +178,11 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   // TODO: make sure this logic is correct
   if (payjoinBalanceChange < originalBalanceChange) {
     const overPaying = payjoinBalanceChange - originalBalanceChange;
-    const originalFee = clonedPsbt.getFee();
-    const additionalFee = payjoinPsbt.getFee() - originalFee;
+    const originalFee = getPsbtFee(clonedPsbt);
+    const additionalFee = getPsbtFee(payjoinPsbt) - originalFee;
     if (overPaying > additionalFee)
       throw new Error('The payjoin receiver is sending more money to himself');
-    if (overPaying > clonedPsbt.getFee())
+    if (overPaying > originalFee)
       throw new Error(
         'The payjoin receiver is making us pay more than twice the original fee',
       );
@@ -201,6 +201,32 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   return payjoinPsbt;
 }
 exports.requestPayjoinWithCustomRemoteCall = requestPayjoinWithCustomRemoteCall;
+function getInputSum(psbt) {
+  let result = 0;
+  for (let i = 0; i < psbt.inputCount; i++) {
+    const input = psbt.data.inputs[i];
+    if (input.witnessUtxo) {
+      result += input.witnessUtxo.value;
+    } else if (input.nonWitnessUtxo) {
+      const index = getGlobalTransaction(psbt).ins[i].index;
+      result += bitcoinjs_lib_1.Transaction.fromBuffer(input.nonWitnessUtxo)
+        .outs[index].value;
+    } else {
+      throw new Error(
+        `'Not enough information on input ${i} to compute the fee`,
+      );
+    }
+  }
+  return result;
+}
+function getPsbtFee(psbt) {
+  const inputSum = getInputSum(psbt);
+  let result = inputSum;
+  for (let i = 0; i < psbt.data.outputs.length; i++) {
+    result -= getGlobalTransaction(psbt).outs[i].value;
+  }
+  return result;
+}
 function getFee(feeRate, size) {
   return feeRate * size;
 }
