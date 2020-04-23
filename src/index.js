@@ -134,19 +134,10 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
     const outputLegacy = getGlobalTransaction(payjoinPsbt).outs[index];
     // Make sure only our output has any information
     delete output.bip32Derivation;
-    psbt.data.outputs.forEach((originalOutput) => {
+    psbt.data.outputs.forEach((originalOutput, i) => {
       // update the payjoin outputs
-      if (
-        outputLegacy.script.equals(
-          // TODO: what if output is P2SH or P2WSH or anything other than P2WPKH?
-          // Can we assume output will contain redeemScript and witnessScript?
-          // If so, we could decompile scriptPubkey, RS, and WS, and search for
-          // the pubkey and its hash160.
-          bitcoinjs_lib_1.payments.p2wpkh({
-            pubkey: originalOutput.bip32Derivation[0].pubkey,
-          }).output,
-        )
-      )
+      const originalOutputLegacy = getGlobalTransaction(psbt).outs[i];
+      if (outputLegacy.script.equals(originalOutputLegacy.script))
         payjoinPsbt.updateOutput(index, originalOutput);
     });
   }

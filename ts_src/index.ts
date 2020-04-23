@@ -156,10 +156,10 @@ export async function requestPayjoinWithCustomRemoteCall(
     const outputLegacy = getGlobalTransaction(payjoinPsbt).outs[index];
     // Make sure only our output has any information
     delete output.bip32Derivation;
-    psbt.data.outputs.forEach((originalOutput,i): void => {
+    psbt.data.outputs.forEach((originalOutput, i): void => {
       // update the payjoin outputs
       const originalOutputLegacy = getGlobalTransaction(psbt).outs[i];
-      
+
       if (outputLegacy.script.equals(originalOutputLegacy.script))
         payjoinPsbt.updateOutput(index, originalOutput);
     });
