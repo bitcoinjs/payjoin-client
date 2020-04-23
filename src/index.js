@@ -167,7 +167,11 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       `Receiver's PSBT should have more inputs than the sent PSBT`,
     );
   }
-  // TODO: check payjoinPsbt.inputs where input is new, that it is the same type as all other inputs from psbt.inputs (all==P2WPKH || all = P2SH-P2WPKH)
+  if (getInputsScriptPubKeyType(payjoinPsbt) !== originalType) {
+    throw new Error(
+      `Receiver's PSBT included inputs which were of a different format than the sent PSBT`,
+    );
+  }
   // TODO: check that if spend amount of payjoinPsbt > spend amount of psbt:
   // TODO: * check if the difference is due to adjusting fee to increase transaction size
   return payjoinPsbt;
@@ -269,14 +273,15 @@ function checkInputSanity(input, txInput) {
         );
     }
   }
-  // TODO: if witnessUtxo is p2sh
-  // if (input.witnessUtxo.ScriptPubKey is  Script s)
-  // {
-  //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
-  //     errors.push('A Witness UTXO is provided for a non-witness input');
-  //   if (s.IsScriptType(ScriptType.P2SH) && redeem_script is Script r && !r.IsScriptType(ScriptType.Witness))
-  //   errors.push('A Witness UTXO is provided for a non-witness input');
-  // }
+  if (
+    getInputScriptPubKeyType(input.witnessUtxo.script) ===
+    ScriptPubKeyType.SegwitP2SH
+  ) {
+    //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
+    //     errors.push('A Witness UTXO is provided for a non-witness input');
+    //   if (s.IsScriptType(ScriptType.P2SH) && redeem_script is Script r && !r.IsScriptType(ScriptType.Witness))
+    //   errors.push('A Witness UTXO is provided for a non-witness input');
+  }
   return errors;
 }
 function getInputsScriptPubKeyType(psbt) {
