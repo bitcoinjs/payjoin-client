@@ -49,7 +49,7 @@ const isP2WSHScript = isPaymentFactory(payments.p2wsh);
 
 export async function requestPayjoinWithCustomRemoteCall(
   psbt: Psbt,
-  remoteCall: (psbt: Psbt) => Promise<Nullable<Psbt>>,
+  remoteCall: (psbt: Psbt) => Promise<Psbt>,
 ): Promise<Psbt> {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
@@ -252,7 +252,7 @@ export async function requestPayjoin(
 ): Promise<Psbt> {
   return requestPayjoinWithCustomRemoteCall(
     psbt,
-    (psbt1): Promise<Nullable<Psbt>> => doRequest(psbt1, payjoinEndpoint),
+    (psbt1): Promise<Psbt> => doRequest(psbt1, payjoinEndpoint),
   );
 }
 
@@ -376,9 +376,7 @@ function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
 // TODO: I think these checks are correct, get Jon to double check they do what
 // I think they do...
 // There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
-function getInputScriptPubKeyType(
-  inputScript: Buffer,
-): Nullable<ScriptPubKeyType> {
+function getInputScriptPubKeyType(inputScript: Buffer): ScriptPubKeyType {
   if (isP2WPKH(inputScript)) {
     return ScriptPubKeyType.Segwit;
   } else if (isP2WSHScript(inputScript)) {
@@ -437,10 +435,7 @@ function getInputIndex(
   return -1;
 }
 
-async function doRequest(
-  psbt: Psbt,
-  payjoinEndpoint: string,
-): Promise<Nullable<Psbt>> {
+async function doRequest(psbt: Psbt, payjoinEndpoint: string): Promise<Psbt> {
   if (!psbt) {
     throw new Error();
   }
