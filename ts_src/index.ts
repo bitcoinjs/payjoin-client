@@ -365,7 +365,7 @@ function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
   for (const input of psbt.data.inputs) {
     const inputScript = input.witnessUtxo!.script;
     const type = getInputScriptPubKeyType(inputScript);
-    if (type == null || (result !== null && type !== result)) {
+    if (result !== null && type !== result) {
       return null;
     }
     result = type;
