@@ -55,9 +55,7 @@ export async function requestPayjoinWithCustomRemoteCall(
   clonedPsbt.finalizeAllInputs();
   const originalType = getInputsScriptPubKeyType(clonedPsbt);
   if (!originalType || supportedWalletFormats.indexOf(originalType) === -1) {
-    throw new Error(
-      'Inputs used do not support payjoin (need to be segwit and need to be all the same)',
-    );
+    throw new Error('Inputs used do not support payjoin, they must be segwit');
   }
 
   // We make sure we don't send unnecessary information to the receiver
@@ -366,7 +364,9 @@ function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
     const inputScript = input.witnessUtxo!.script;
     const type = getInputScriptPubKeyType(inputScript);
     if (result !== null && type !== result) {
-      return null;
+      throw new Error(
+        'Inputs used do not support payjoin, they must all be the same type',
+      );
     }
     result = type;
   }
