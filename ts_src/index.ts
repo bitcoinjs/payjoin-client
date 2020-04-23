@@ -358,16 +358,6 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
     }
   }
 
-  if (
-    getInputScriptPubKeyType(input.witnessUtxo!.script) ===
-    ScriptPubKeyType.SegwitP2SH
-  ) {
-    //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
-    //     errors.push('A Witness UTXO is provided for a non-witness input');
-    //   if (s.IsScriptType(ScriptType.P2SH) && redeem_script is Script r && !r.IsScriptType(ScriptType.Witness))
-    //   errors.push('A Witness UTXO is provided for a non-witness input');
-  }
-
   return errors;
 }
 
