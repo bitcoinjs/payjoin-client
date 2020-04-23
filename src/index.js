@@ -45,9 +45,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   const originalType = getInputsScriptPubKeyType(clonedPsbt);
   if (
     !originalType ||
-    exports.supportedWalletFormats.indexOf(
-      getInputsScriptPubKeyType(clonedPsbt),
-    ) === -1
+    exports.supportedWalletFormats.indexOf(originalType) === -1
   ) {
     throw new Error(
       'Inputs used do not support payjoin (need to be segwit and need to be all the same)',
@@ -317,22 +315,10 @@ function checkInputSanity(input, txInput) {
         );
     }
   }
-  if (
-    getInputScriptPubKeyType(input.witnessUtxo.script) ===
-    ScriptPubKeyType.SegwitP2SH
-  ) {
-    //   if (!s.IsScriptType(ScriptType.P2SH) && !s.IsScriptType(ScriptType.Witness))
-    //     errors.push('A Witness UTXO is provided for a non-witness input');
-    //   if (s.IsScriptType(ScriptType.P2SH) && redeem_script is Script r && !r.IsScriptType(ScriptType.Witness))
-    //   errors.push('A Witness UTXO is provided for a non-witness input');
-  }
   return errors;
 }
 function getInputsScriptPubKeyType(psbt) {
-  if (
-    !isAllFinalized(psbt) ||
-    psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0
-  )
+  if (psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0)
     throw new Error('The psbt should be finalized with witness information');
   let result = null;
   for (const input of psbt.data.inputs) {
@@ -375,14 +361,6 @@ function isFinalized(input) {
   return (
     input.finalScriptSig !== undefined || input.finalScriptWitness !== undefined
   );
-}
-function isAllFinalized(psbt) {
-  for (const input of psbt.data.inputs) {
-    if (!isFinalized(input)) {
-      return false;
-    }
-  }
-  return true;
 }
 function getGlobalTransaction(psbt) {
   // TODO: bitcoinjs-lib to expose outputs to Psbt class

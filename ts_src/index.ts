@@ -54,12 +54,7 @@ export async function requestPayjoinWithCustomRemoteCall(
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
   const originalType = getInputsScriptPubKeyType(clonedPsbt);
-  if (
-    !originalType ||
-    supportedWalletFormats.indexOf(
-      getInputsScriptPubKeyType(clonedPsbt) as ScriptPubKeyType,
-    ) === -1
-  ) {
+  if (!originalType || supportedWalletFormats.indexOf(originalType) === -1) {
     throw new Error(
       'Inputs used do not support payjoin (need to be segwit and need to be all the same)',
     );
@@ -362,10 +357,7 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
 }
 
 function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
-  if (
-    !isAllFinalized(psbt) ||
-    psbt.data.inputs.filter((i): boolean => !i.witnessUtxo).length > 0
-  )
+  if (psbt.data.inputs.filter((i): boolean => !i.witnessUtxo).length > 0)
     throw new Error('The psbt should be finalized with witness information');
 
   let result: Nullable<ScriptPubKeyType> = null;
@@ -419,15 +411,6 @@ function isFinalized(input: PsbtInput): boolean {
   return (
     input.finalScriptSig !== undefined || input.finalScriptWitness !== undefined
   );
-}
-
-function isAllFinalized(psbt: Psbt): boolean {
-  for (const input of psbt.data.inputs) {
-    if (!isFinalized(input)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 function getGlobalTransaction(psbt: Psbt): Transaction {
