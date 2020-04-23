@@ -43,10 +43,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   const clonedPsbt = psbt.clone();
   clonedPsbt.finalizeAllInputs();
   const originalType = getInputsScriptPubKeyType(clonedPsbt);
-  if (
-    !originalType ||
-    exports.supportedWalletFormats.indexOf(originalType) === -1
-  ) {
+  if (exports.supportedWalletFormats.indexOf(originalType) === -1) {
     throw new Error('Inputs used do not support payjoin, they must be segwit');
   }
   // We make sure we don't send unnecessary information to the receiver
