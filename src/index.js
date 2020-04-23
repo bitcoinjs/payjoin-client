@@ -318,18 +318,14 @@ function checkInputSanity(input, txInput) {
 function getInputsScriptPubKeyType(psbt) {
   if (psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0)
     throw new Error('The psbt should be finalized with witness information');
-  let result = null;
+  const types = new Set();
   for (const input of psbt.data.inputs) {
     const inputScript = input.witnessUtxo.script;
     const type = getInputScriptPubKeyType(inputScript);
-    if (result !== null && type !== result) {
-      throw new Error(
-        'Inputs used do not support payjoin, they must all be the same type',
-      );
-    }
-    result = type;
+    types.add(type);
   }
-  return result;
+  if (types.size > 1) throw new Error('Inputs must all be the same type');
+  return types.values().next().value;
 }
 // TODO: I think these checks are correct, get Jon to double check they do what
 // I think they do...

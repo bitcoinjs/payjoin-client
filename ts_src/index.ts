@@ -6,8 +6,6 @@ import {
 } from 'bip174/src/lib/interfaces';
 import * as fetch from 'isomorphic-fetch';
 
-type Nullable<T> = T | null;
-
 enum ScriptPubKeyType {
   /// <summary>
   /// Derive P2PKH addresses (P2PKH)
@@ -354,23 +352,21 @@ function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
   return errors;
 }
 
-function getInputsScriptPubKeyType(psbt: Psbt): Nullable<ScriptPubKeyType> {
+function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
   if (psbt.data.inputs.filter((i): boolean => !i.witnessUtxo).length > 0)
     throw new Error('The psbt should be finalized with witness information');
 
-  let result: Nullable<ScriptPubKeyType> = null;
+  const types = new Set();
 
   for (const input of psbt.data.inputs) {
     const inputScript = input.witnessUtxo!.script;
     const type = getInputScriptPubKeyType(inputScript);
-    if (result !== null && type !== result) {
-      throw new Error(
-        'Inputs used do not support payjoin, they must all be the same type',
-      );
-    }
-    result = type;
+    types.add(type);
   }
-  return result;
+
+  if (types.size > 1) throw new Error('Inputs must all be the same type');
+
+  return types.values().next().value;
 }
 
 // TODO: I think these checks are correct, get Jon to double check they do what
