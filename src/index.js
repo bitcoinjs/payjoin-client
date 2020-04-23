@@ -172,11 +172,38 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
       `Receiver's PSBT included inputs which were of a different format than the sent PSBT`,
     );
   }
-  // TODO: check that if spend amount of payjoinPsbt > spend amount of psbt:
-  // TODO: * check if the difference is due to adjusting fee to increase transaction size
+  // TODO: figure out the payment amount here, perhaps by specifying in a param which output is the change
+  const originalBalanceChange = 0;
+  const payjoinBalanceChange = 0;
+  // TODO: make sure this logic is correct
+  if (payjoinBalanceChange < originalBalanceChange) {
+    const overPaying = payjoinBalanceChange - originalBalanceChange;
+    const originalFee = clonedPsbt.getFee();
+    const additionalFee = payjoinPsbt.getFee() - originalFee;
+    if (overPaying > additionalFee)
+      throw new Error('The payjoin receiver is sending more money to himself');
+    if (overPaying > clonedPsbt.getFee())
+      throw new Error(
+        'The payjoin receiver is making us pay more than twice the original fee',
+      );
+    const newVirtualSize = getGlobalTransaction(payjoinPsbt).virtualSize();
+    // Let's check the difference is only for the fee and that feerate
+    // did not changed that much
+    const originalFeeRate = clonedPsbt.getFeeRate();
+    let expectedFee = getFee(originalFeeRate, newVirtualSize);
+    // Signing precisely is hard science, give some breathing room for error.
+    expectedFee += getFee(originalFeeRate, payjoinPsbt.inputCount * 2);
+    if (overPaying > expectedFee - originalFee)
+      throw new Error(
+        'The payjoin receiver increased the fee rate we are paying too much',
+      );
+  }
   return payjoinPsbt;
 }
 exports.requestPayjoinWithCustomRemoteCall = requestPayjoinWithCustomRemoteCall;
+function getFee(feeRate, size) {
+  return feeRate * size;
+}
 async function requestPayjoin(psbt, payjoinEndpoint) {
   return requestPayjoinWithCustomRemoteCall(psbt, (psbt1) =>
     doRequest(psbt1, payjoinEndpoint),
