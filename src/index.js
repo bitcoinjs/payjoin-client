@@ -38,11 +38,10 @@ function isPaymentFactory(payment) {
   };
 }
 const isP2WPKH = isPaymentFactory(bitcoinjs_lib_1.payments.p2wpkh);
-const isP2WSHScript = isPaymentFactory(bitcoinjs_lib_1.payments.p2wsh);
 async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   const clonedPsbt = psbt.clone();
-  clonedPsbt.finalizeAllInputs();
   const originalType = getInputsScriptPubKeyType(clonedPsbt);
+  clonedPsbt.finalizeAllInputs();
   if (exports.supportedWalletFormats.indexOf(originalType) === -1) {
     throw new Error('Inputs used do not support payjoin, they must be segwit');
   }
@@ -74,7 +73,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
   }
   const ourInputIndexes = [];
   // Add back input data from the original psbt (such as witnessUtxo)
-  getGlobalTransaction(clonedPsbt).ins.forEach((originalInput, index) => {
+  getGlobalTransaction(psbt).ins.forEach((originalInput, index) => {
     const payjoinIndex = getInputIndex(
       payjoinPsbt,
       originalInput.hash,
@@ -91,7 +90,7 @@ async function requestPayjoinWithCustomRemoteCall(psbt, remoteCall) {
     ) {
       throw new Error(`Inputs from original PSBT have a different sequence`);
     }
-    payjoinPsbt.updateInput(payjoinIndex, clonedPsbt.data.inputs[index]);
+    payjoinPsbt.updateInput(payjoinIndex, psbt.data.inputs[index]);
     const payjoinPsbtInput = payjoinPsbt.data.inputs[payjoinIndex];
     delete payjoinPsbtInput.partialSig;
     delete payjoinPsbtInput.finalScriptSig;
@@ -316,7 +315,13 @@ function getInputsScriptPubKeyType(psbt) {
   const types = new Set();
   for (const input of psbt.data.inputs) {
     const inputScript = input.witnessUtxo.script;
-    const type = getInputScriptPubKeyType(inputScript);
+    const redeemScript =
+      input.redeemScript ||
+      (input.finalScriptSig &&
+        bitcoinjs_lib_1.script.decompile(input.finalScriptSig)[0]) ||
+      Buffer.from([]);
+    if (typeof redeemScript === 'number') continue;
+    const type = getInputScriptPubKeyType(inputScript, redeemScript);
     types.add(type);
   }
   if (types.size > 1) throw new Error('Inputs must all be the same type');
@@ -325,10 +330,10 @@ function getInputsScriptPubKeyType(psbt) {
 // TODO: I think these checks are correct, get Jon to double check they do what
 // I think they do...
 // There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
-function getInputScriptPubKeyType(inputScript) {
+function getInputScriptPubKeyType(inputScript, redeemScript) {
   if (isP2WPKH(inputScript)) {
     return ScriptPubKeyType.Segwit;
-  } else if (isP2WSHScript(inputScript)) {
+  } else if (isP2WPKH(redeemScript)) {
     return ScriptPubKeyType.SegwitP2SH;
   }
   return ScriptPubKeyType.Legacy;
