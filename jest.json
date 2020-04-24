@@ -9,12 +9,13 @@
   },
   "testRegex": "/ts_src/.*\\.spec\\.ts$",
   "testURL": "http://localhost/",
+  "testEnvironment" : "node",
   "coverageThreshold": {
     "global": {
-      "statements": 0,
-      "branches": 0,
-      "functions": 0,
-      "lines": 0
+      "statements": 50,
+      "branches": 40,
+      "functions": 70,
+      "lines": 50
     }
   },
   "collectCoverageFrom": [
