@@ -14,10 +14,10 @@ const APIPASS = process.env['APIPASS'] || 'satoshi';
 let regtestUtils: RegtestUtils;
 
 const HOST = process.env['BTCPAY_HOST'] || 'http://127.0.0.1:49392';
-const KP = process.env['BTCPAY_KP']
-  ? btcPayCrypto.load_keypair(Buffer.from(process.env['BTCPAY_KP'], 'hex'))
-  : btcPayCrypto.generate_keypair();
-let btcPayClient: BTCPayClient;
+const KP1 = btcPayCrypto.generate_keypair();
+const KP2 = btcPayCrypto.generate_keypair();
+let btcPayClientSegwit: BTCPayClient;
+let btcPayClientSegwitP2SH: BTCPayClient;
 
 // # run the following docker command and wait 10 seconds before running tests
 // docker run -p 49392:49392 -p 8080:8080 -p 18271:18271 junderw/btcpay-client-test-server
@@ -26,10 +26,27 @@ describe('requestPayjoin', () => {
   beforeAll(async () => {
     jest.setTimeout(20000);
     regtestUtils = new RegtestUtils({ APIURL, APIPASS });
-    const { pairingCode } = await loginAndGetPairingCode();
-    btcPayClient = new BTCPayClient(HOST, KP);
-    const token = await btcPayClient.pair_client(pairingCode);
-    btcPayClient = new BTCPayClient(HOST, KP, token);
+
+    const browser = await getBrowser();
+
+    const { pairingCode: pairingCode1 } = await loginAndGetPairingCode(
+      browser,
+      'p2wpkh',
+    );
+    btcPayClientSegwit = new BTCPayClient(HOST, KP1);
+    const token1 = await btcPayClientSegwit.pair_client(pairingCode1);
+    btcPayClientSegwit = new BTCPayClient(HOST, KP1, token1);
+
+    const { pairingCode: pairingCode2 } = await loginAndGetPairingCode(
+      browser,
+      'p2sh-p2wpkh',
+      true,
+    );
+    btcPayClientSegwitP2SH = new BTCPayClient(HOST, KP2);
+    const token2 = await btcPayClientSegwitP2SH.pair_client(pairingCode2);
+    btcPayClientSegwitP2SH = new BTCPayClient(HOST, KP2, token2);
+
+    browser.close();
   });
   it('should exist', () => {
     expect(requestPayjoin).toBeDefined();
@@ -37,8 +54,64 @@ describe('requestPayjoin', () => {
     expect(requestPayjoinWithCustomRemoteCall).toBeDefined();
     expect(typeof requestPayjoinWithCustomRemoteCall).toBe('function');
   });
-  it('should request payjoin', async () => {
-    const invoice = await btcPayClient.create_invoice({
+  it('should request p2sh-p2wpkh payjoin', async () => {
+    const invoice = await btcPayClientSegwitP2SH.create_invoice({
+      currency: 'USD',
+      price: 1.12,
+    });
+    const pjEndpoint = qs.decode(invoice.paymentUrls.BIP21 as string)
+      .pj as string;
+
+    const keyPair = bitcoin.ECPair.makeRandom({ network });
+    const p2sh = bitcoin.payments.p2sh({
+      redeem: bitcoin.payments.p2wpkh({
+        pubkey: keyPair.publicKey,
+        network,
+      }),
+      network,
+    });
+    const unspent = await regtestUtils.faucet(p2sh.address!, 2e7);
+    const sendAmount = Math.round(parseFloat(invoice.btcPrice) * 1e8);
+    const psbt = new bitcoin.Psbt({ network })
+      .addInput({
+        hash: unspent.txId,
+        index: unspent.vout,
+        redeemScript: p2sh.redeem!.output!,
+        witnessUtxo: {
+          script: p2sh.output!,
+          value: unspent.value,
+        },
+      })
+      .addOutput({
+        address: invoice.bitcoinAddress,
+        value: sendAmount,
+      })
+      .addOutput({
+        address: p2sh.address!,
+        value: unspent.value - sendAmount - 10000,
+      })
+      .signInput(0, keyPair);
+    const newPsbt = await requestPayjoin(psbt, pjEndpoint);
+    newPsbt.data.inputs.forEach((psbtInput, i) => {
+      if (
+        psbtInput.finalScriptSig === undefined &&
+        psbtInput.finalScriptWitness === undefined
+      ) {
+        newPsbt.signInput(i, keyPair).finalizeInput(i);
+      }
+    });
+    const tx = newPsbt.extractTransaction();
+    await regtestUtils.broadcast(tx.toHex());
+    await regtestUtils.verify({
+      txId: tx.getId(),
+      address: bitcoin.address.fromOutputScript(tx.outs[1].script, network),
+      vout: 1,
+      value: tx.outs[1].value,
+    });
+    expect(tx).toBeDefined();
+  });
+  it('should request p2wpkh payjoin', async () => {
+    const invoice = await btcPayClientSegwit.create_invoice({
       currency: 'USD',
       price: 1.12,
     });
@@ -99,14 +172,8 @@ const IGNORE_SANDBOX_ERROR = process.env['BTCPAY_IGNORE_SANDBOX_ERROR'];
 const USER_NAME = 'test@example.com';
 const PASSWORD = 'satoshinakamoto';
 let STORE_ID = '';
-async function loginAndGetPairingCode(): Promise<{
-  browser: Browser;
-  page: Page;
-  pairingCode: string;
-}> {
-  const newTokenName = 'autotest ' + new Date().getTime();
-
-  const browser = await puppeteer
+async function getBrowser(): Promise<Browser> {
+  return puppeteer
     .launch({
       headless: HEADLESS,
       args: ['--window-size=' + WINDOW_WIDTH + ',' + WINDOW_HEIGHT],
@@ -138,6 +205,18 @@ async function loginAndGetPairingCode(): Promise<{
         }
       },
     );
+}
+async function loginAndGetPairingCode(
+  browser: Browser,
+  type: 'p2sh-p2wpkh' | 'p2wpkh',
+  skipLogin: boolean = false,
+): Promise<{
+  browser: Browser;
+  page: Page;
+  pairingCode: string;
+}> {
+  const newTokenName = 'autotest ' + type + new Date().getTime();
+  const storeIndex = type === 'p2wpkh' ? 1 : 2;
   const page = (await browser.pages())[0];
   await page.setViewport({ width: WINDOW_WIDTH, height: WINDOW_HEIGHT });
   try {
@@ -158,14 +237,18 @@ async function loginAndGetPairingCode(): Promise<{
     throw e;
   }
 
-  await page.type('#Email', USER_NAME);
-  await page.type('#Password', PASSWORD);
-  await page.click('#LoginButton');
+  if (!skipLogin) {
+    await page.type('#Email', USER_NAME);
+    await page.type('#Password', PASSWORD);
+    await page.click('#LoginButton');
+  }
   await page.goto(HOST + '/stores');
   await page.waitForSelector('#CreateStore');
   await page.click(
     'table.table.table-sm.table-responsive-md > tbody > ' +
-      'tr:nth-of-type(1) > td:nth-of-type(3) > a:nth-of-type(2)',
+      'tr:nth-of-type(' +
+      storeIndex +
+      ') > td:nth-of-type(3) > a:nth-of-type(2)',
   );
   await page.waitForSelector('#Id');
   const idElement = await page.$$('#Id');
@@ -192,7 +275,6 @@ async function loginAndGetPairingCode(): Promise<{
     /Server initiated pairing code: (\S{7})/,
   ) || [])[1];
   if (!pairingCode) throw new Error('Could not get pairing code');
-  browser.close();
   return {
     browser,
     page,
