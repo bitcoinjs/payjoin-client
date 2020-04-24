@@ -43,15 +43,14 @@ function isPaymentFactory(payment: any): (script: Buffer) => boolean {
   };
 }
 const isP2WPKH = isPaymentFactory(payments.p2wpkh);
-const isP2WSHScript = isPaymentFactory(payments.p2wsh);
 
 export async function requestPayjoinWithCustomRemoteCall(
   psbt: Psbt,
   remoteCall: (psbt: Psbt) => Promise<Psbt>,
 ): Promise<Psbt> {
   const clonedPsbt = psbt.clone();
-  clonedPsbt.finalizeAllInputs();
   const originalType = getInputsScriptPubKeyType(clonedPsbt);
+  clonedPsbt.finalizeAllInputs();
   if (supportedWalletFormats.indexOf(originalType) === -1) {
     throw new Error('Inputs used do not support payjoin, they must be segwit');
   }
@@ -358,7 +357,8 @@ function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
 
   for (const input of psbt.data.inputs) {
     const inputScript = input.witnessUtxo!.script;
-    const type = getInputScriptPubKeyType(inputScript);
+    const redeemScript = input.redeemScript || Buffer.from([]);
+    const type = getInputScriptPubKeyType(inputScript, redeemScript);
     types.add(type);
   }
 
@@ -370,10 +370,10 @@ function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
 // TODO: I think these checks are correct, get Jon to double check they do what
 // I think they do...
 // There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
-function getInputScriptPubKeyType(inputScript: Buffer): ScriptPubKeyType {
+function getInputScriptPubKeyType(inputScript: Buffer, redeemScript: Buffer): ScriptPubKeyType {
   if (isP2WPKH(inputScript)) {
     return ScriptPubKeyType.Segwit;
-  } else if (isP2WSHScript(inputScript)) {
+  } else if (isP2WPKH(redeemScript)) {
     return ScriptPubKeyType.SegwitP2SH;
   }
 
