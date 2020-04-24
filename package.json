@@ -1,6 +1,6 @@
 {
   "name": "payjoin-client",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A BTCPay Payjoin compatible client",
   "keywords": [
     "bitcoinjs",
@@ -53,7 +53,11 @@
     "tslint": "^6.1.1",
     "typescript": "^3.8.3"
   },
-  "author": "Andrew Camilleri (Kukks)",
+  "contributors": [
+    "Andrew Camilleri (Kukks)",
+    "Luke Childs <lukechilds123@gmail.com>",
+    "Jonathan Underwood <junderwood@bitcoinbank.co.jp>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Kukks/payjoin-client-js/issues"

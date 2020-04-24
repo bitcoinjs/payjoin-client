@@ -1,4 +1,10 @@
-import { payments, Psbt, Transaction, TxInput } from 'bitcoinjs-lib';
+import {
+  payments,
+  Psbt,
+  script as bscript,
+  Transaction,
+  TxInput,
+} from 'bitcoinjs-lib';
 import {
   Bip32Derivation,
   GlobalXpub,
@@ -86,7 +92,7 @@ export async function requestPayjoinWithCustomRemoteCall(
 
   const ourInputIndexes: number[] = [];
   // Add back input data from the original psbt (such as witnessUtxo)
-  getGlobalTransaction(clonedPsbt).ins.forEach((originalInput, index): void => {
+  getGlobalTransaction(psbt).ins.forEach((originalInput, index): void => {
     const payjoinIndex = getInputIndex(
       payjoinPsbt,
       originalInput.hash,
@@ -106,7 +112,7 @@ export async function requestPayjoinWithCustomRemoteCall(
       throw new Error(`Inputs from original PSBT have a different sequence`);
     }
 
-    payjoinPsbt.updateInput(payjoinIndex, clonedPsbt.data.inputs[index]);
+    payjoinPsbt.updateInput(payjoinIndex, psbt.data.inputs[index]);
     const payjoinPsbtInput = payjoinPsbt.data.inputs[payjoinIndex];
     delete payjoinPsbtInput.partialSig;
     delete payjoinPsbtInput.finalScriptSig;
@@ -357,7 +363,11 @@ function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
 
   for (const input of psbt.data.inputs) {
     const inputScript = input.witnessUtxo!.script;
-    const redeemScript = input.redeemScript || Buffer.from([]);
+    const redeemScript =
+      input.redeemScript ||
+      (input.finalScriptSig && bscript.decompile(input.finalScriptSig)![0]) ||
+      Buffer.from([]);
+    if (typeof redeemScript === 'number') continue;
     const type = getInputScriptPubKeyType(inputScript, redeemScript);
     types.add(type);
   }
@@ -370,7 +380,10 @@ function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
 // TODO: I think these checks are correct, get Jon to double check they do what
 // I think they do...
 // There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
-function getInputScriptPubKeyType(inputScript: Buffer, redeemScript: Buffer): ScriptPubKeyType {
+function getInputScriptPubKeyType(
+  inputScript: Buffer,
+  redeemScript: Buffer,
+): ScriptPubKeyType {
   if (isP2WPKH(inputScript)) {
     return ScriptPubKeyType.Segwit;
   } else if (isP2WPKH(redeemScript)) {
