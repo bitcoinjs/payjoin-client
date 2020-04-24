@@ -147,7 +147,7 @@ async function loginAndGetPairingCode(): Promise<{
       browser.close();
       console.log(
         'Please start docker container locally:\n' +
-          'docker run -p 127.0.0.1:49392:49392 junderw/btcpay-client-test-server',
+          'docker run -p 49392:49392 -p 8080:8080 -p 18271:18271 junderw/btcpay-client-test-server',
       );
       return {
         page,
