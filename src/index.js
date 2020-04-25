@@ -384,7 +384,7 @@ async function doRequest(psbt, payjoinEndpoint) {
     headers: new Headers({
       'Content-Type': 'text/plain',
     }),
-    body: psbt.toHex(),
+    body: psbt.toBase64(),
   });
   const responseText = await response.text();
   if (!response.ok) {
