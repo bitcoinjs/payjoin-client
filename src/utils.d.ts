@@ -7,7 +7,6 @@ export declare enum ScriptPubKeyType {
     SegwitP2SH = 2
 }
 export declare const SUPPORTED_WALLET_FORMATS: ScriptPubKeyType[];
-export declare function getPsbtFee(psbt: Psbt): number;
 export declare function getFee(feeRate: number, size: number): number;
 export declare function checkSanity(psbt: Psbt): {
     [index: number]: string[];
