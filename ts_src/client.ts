@@ -169,7 +169,7 @@ export class PayjoinClient {
 
     // TODO: make sure this logic is correct
     if (payjoinPaidBack < paidBack) {
-      const overPaying = payjoinPaidBack - paidBack;
+      const overPaying = paidBack - payjoinPaidBack;
       const originalFee = psbt.getFee();
       const additionalFee = signedPsbt.getFee() - originalFee;
       if (overPaying > additionalFee)
