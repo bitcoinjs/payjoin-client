@@ -45,16 +45,16 @@ describe('requestPayjoin', () => {
     expect(typeof PayjoinClient).toBe('function'); // JS classes are functions
   });
   it('should request p2sh-p2wpkh payjoin', async () => {
-    await testPayjoin(btcPayClientSegwitP2SH, getP2SHP2WPKH);
+    await testPayjoin(btcPayClientSegwitP2SH, 'p2sh-p2wpkh');
   });
   it('should request p2wpkh payjoin', async () => {
-    await testPayjoin(btcPayClientSegwit, getP2WPKH);
+    await testPayjoin(btcPayClientSegwit, 'p2wpkh');
   });
 });
 
 async function testPayjoin(
   btcPayClient: BTCPayClient,
-  getPayment: (pubkey: Buffer) => bitcoin.Payment,
+  scriptType: ScriptType,
 ): Promise<void> {
   const invoice = await btcPayClient.create_invoice({
     currency: 'USD',
@@ -66,8 +66,8 @@ async function testPayjoin(
   const wallet = new TestWallet(
     invoice.bitcoinAddress,
     Math.round(parseFloat(invoice.btcPrice) * 1e8),
-    bitcoin.ECPair.makeRandom({ network }),
-    getPayment,
+    bitcoin.bip32.fromSeed(bitcoin.ECPair.makeRandom().privateKey!, network),
+    scriptType,
   );
   const client = new PayjoinClient({
     wallet,
@@ -88,23 +88,6 @@ async function testPayjoin(
   });
 }
 
-function getP2WPKH(pubkey: Buffer) {
-  return bitcoin.payments.p2wpkh({
-    pubkey,
-    network,
-  });
-}
-
-function getP2SHP2WPKH(pubkey: Buffer) {
-  return bitcoin.payments.p2sh({
-    redeem: bitcoin.payments.p2wpkh({
-      pubkey,
-      network,
-    }),
-    network,
-  });
-}
-
 async function getTokens(): Promise<{
   p2wpkh: {
     merchant: string;
@@ -120,51 +103,70 @@ async function getTokens(): Promise<{
   return fetch(TOKENURL).then((v) => v.json());
 }
 
-interface Unspent {
-  value: number;
-  txId: string;
-  vout: number;
-  address?: string;
-  height?: number;
-}
-
 // Use this for testing
+type ScriptType = 'p2wpkh' | 'p2sh-p2wpkh';
 class TestWallet implements IPayjoinClientWallet {
   tx: bitcoin.Transaction | undefined;
   timeout: NodeJS.Timeout | undefined;
-  utxos: Unspent[] = [];
 
   constructor(
     private sendToAddress: string,
     private sendToAmount: number,
-    private ecPair: bitcoin.ECPairInterface,
-    private getPayment: (pubkey: Buffer) => bitcoin.Payment,
+    private rootNode: bitcoin.BIP32Interface,
+    private scriptType: ScriptType,
   ) {}
 
   async getPsbt() {
-    const payment = this.getPayment(this.ecPair.publicKey);
-    const unspent = await regtestUtils.faucet(payment.address!, 2e7);
-    this.utxos.push(unspent);
+    // See BIP84 and BIP49 for the derivation logic
+    const path = this.scriptType === 'p2wpkh' ? "m/84'/1'/0'" : "m/49'/1'/0'";
+    const accountNode = this.rootNode.derivePath(path);
+    const firstKeyNode = accountNode.derivePath('0/0');
+    const firstKeypayment = this.getPayment(
+      firstKeyNode.publicKey,
+      this.scriptType,
+    );
+    const firstChangeNode = accountNode.derivePath('1/0');
+    const firstChangepayment = this.getPayment(
+      firstChangeNode.publicKey,
+      this.scriptType,
+    );
+    const unspent = await regtestUtils.faucet(firstKeypayment.address!, 2e7);
     const sendAmount = this.sendToAmount;
     return new bitcoin.Psbt({ network })
       .addInput({
         hash: unspent.txId,
         index: unspent.vout,
         witnessUtxo: {
-          script: payment.output!,
+          script: firstKeypayment.output!,
           value: unspent.value,
         },
-        ...(payment.redeem ? { redeemScript: payment.redeem.output! } : {}),
+        bip32Derivation: [
+          {
+            pubkey: firstKeyNode.publicKey,
+            masterFingerprint: this.rootNode.fingerprint,
+            path: path + '/0/0',
+          },
+        ],
+        ...(firstKeypayment.redeem
+          ? { redeemScript: firstKeypayment.redeem.output! }
+          : {}),
       })
       .addOutput({
         address: this.sendToAddress,
         value: sendAmount,
       })
       .addOutput({
-        address: payment.address!,
+        address: firstChangepayment.address!,
         value: unspent.value - sendAmount - 10000,
+        bip32Derivation: [
+          {
+            pubkey: firstChangeNode.publicKey,
+            masterFingerprint: this.rootNode.fingerprint,
+            path: path + '/1/0',
+          },
+        ],
       })
-      .signInput(0, this.ecPair);
+      .signInputHD(0, this.rootNode);
   }
 
   async signPsbt(psbt: bitcoin.Psbt): Promise<bitcoin.Psbt> {
@@ -173,7 +175,7 @@ class TestWallet implements IPayjoinClientWallet {
         psbtInput.finalScriptSig === undefined &&
         psbtInput.finalScriptWitness === undefined
       ) {
-        psbt.signInput(i, this.ecPair).finalizeInput(i);
+        psbt.signInputHD(i, this.rootNode).finalizeInput(i);
       }
     });
     return psbt;
@@ -208,15 +210,47 @@ class TestWallet implements IPayjoinClientWallet {
   }
 
   async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {
+    const derivationIsMine = (d: any): boolean => {
+      if (!d.masterFingerprint.equals(this.rootNode.fingerprint)) return false;
+      if (!this.rootNode.derivePath(d.path).publicKey.equals(d.pubkey))
+        return false;
+      return true;
+    };
+    let ourTotalIn = 0;
     let ourTotalOut = 0;
-    const payment = this.getPayment(this.ecPair.publicKey);
+    for (let i = 0; i < psbt.inputCount; i++) {
+      const input = psbt.data.inputs[i];
+      if (input.bip32Derivation && input.bip32Derivation.some(derivationIsMine))
+        ourTotalOut += input.witnessUtxo!.value;
+    }
+
     for (let i = 0; i < psbt.data.outputs.length; i++) {
       const output = psbt.data.outputs[i];
-      const outputLegacy = this.getGlobalTransaction(psbt).outs[i];
-      if (output.bip32Derivation || payment.output!.equals(outputLegacy.script))
-        ourTotalOut += outputLegacy.value;
+      if (
+        output.bip32Derivation &&
+        output.bip32Derivation.some(derivationIsMine)
+      )
+        ourTotalIn += this.getGlobalTransaction(psbt).outs[i].value;
     }
-    return ourTotalOut;
+
+    return ourTotalIn - ourTotalOut;
+  }
+
+  private getPayment(pubkey: Buffer, scriptType: ScriptType): bitcoin.Payment {
+    if (scriptType === 'p2wpkh') {
+      return bitcoin.payments.p2wpkh({
+        pubkey,
+        network,
+      });
+    } else {
+      return bitcoin.payments.p2sh({
+        redeem: bitcoin.payments.p2wpkh({
+          pubkey,
+          network,
+        }),
+        network,
+      });
+    }
   }
 
   private getGlobalTransaction(psbt: bitcoin.Psbt): bitcoin.Transaction {
