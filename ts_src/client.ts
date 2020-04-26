@@ -160,9 +160,11 @@ export class PayjoinClient {
         `Receiver's PSBT included inputs which were of a different format than the sent PSBT`,
       );
     }
-    // TODO: figure out the payment amount here, perhaps by specifying in a param which output is the change
-    const originalBalanceChange = 0;
-    const payjoinBalanceChange = 0;
+
+    const originalBalanceChange = await this.wallet.getBalanceChange(psbt);
+    const payjoinBalanceChange = await this.wallet.getBalanceChange(
+      payjoinPsbt,
+    );
 
     // TODO: make sure this logic is correct
     if (payjoinBalanceChange < originalBalanceChange) {

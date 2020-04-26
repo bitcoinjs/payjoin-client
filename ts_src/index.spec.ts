@@ -4,6 +4,8 @@ import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
 import * as fetch from 'isomorphic-fetch';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as qs from 'querystring';
+import { Psbt } from 'bitcoinjs-lib';
+import { Transaction } from 'bitcoinjs-lib';
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
@@ -195,5 +197,29 @@ class TestWallet implements IPayjoinClientWallet {
       ms,
     );
     // returns immediately after setting the timeout.
+  }
+
+  async getBalanceChange(psbt: bitcoin.Psbt): Promise<number> {
+    let ourTotalIn = 0;
+    let ourTotalOut = 0;
+    for (let i = 0; i < psbt.inputCount; i++) {
+      const input = psbt.data.inputs[i];
+      if (input.bip32Derivation) ourTotalIn += input.witnessUtxo!.value;
+    }
+
+    for (let i = 0; i < psbt.data.outputs.length; i++) {
+      const output = psbt.data.outputs[i];
+      if (output.bip32Derivation)
+        ourTotalIn += this.getGlobalTransaction(psbt).outs[i].value;
+    }
+
+    return ourTotalIn - ourTotalOut;
+  }
+
+  private getGlobalTransaction(psbt: Psbt): Transaction {
+    // TODO: bitcoinjs-lib to expose outputs to Psbt class
+    // instead of using private (JS has no private) attributes
+    // @ts-ignore
+    return psbt.__CACHE.__TX;
   }
 }
