@@ -40,33 +40,6 @@ function isPaymentFactory(payment) {
   };
 }
 const isP2WPKH = isPaymentFactory(bitcoinjs_lib_1.payments.p2wpkh);
-function getInputSum(psbt) {
-  let result = 0;
-  for (let i = 0; i < psbt.inputCount; i++) {
-    const input = psbt.data.inputs[i];
-    if (input.witnessUtxo) {
-      result += input.witnessUtxo.value;
-    } else if (input.nonWitnessUtxo) {
-      const index = getGlobalTransaction(psbt).ins[i].index;
-      result += bitcoinjs_lib_1.Transaction.fromBuffer(input.nonWitnessUtxo)
-        .outs[index].value;
-    } else {
-      throw new Error(
-        `'Not enough information on input ${i} to compute the fee`,
-      );
-    }
-  }
-  return result;
-}
-function getPsbtFee(psbt) {
-  const inputSum = getInputSum(psbt);
-  let result = inputSum;
-  for (let i = 0; i < psbt.data.outputs.length; i++) {
-    result -= getGlobalTransaction(psbt).outs[i].value;
-  }
-  return result;
-}
-exports.getPsbtFee = getPsbtFee;
 function getFee(feeRate, size) {
   return feeRate * size;
 }

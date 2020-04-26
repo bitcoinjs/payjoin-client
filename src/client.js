@@ -136,11 +136,14 @@ class PayjoinClient {
     }
     const paidBack = await this.wallet.getSumPaidToUs(psbt);
     const payjoinPaidBack = await this.wallet.getSumPaidToUs(payjoinPsbt);
+    const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
+    const tx = signedPsbt.extractTransaction();
+    psbt.finalizeAllInputs();
     // TODO: make sure this logic is correct
     if (payjoinPaidBack < paidBack) {
       const overPaying = payjoinPaidBack - paidBack;
-      const originalFee = utils_1.getPsbtFee(clonedPsbt);
-      const additionalFee = utils_1.getPsbtFee(payjoinPsbt) - originalFee;
+      const originalFee = psbt.getFee();
+      const additionalFee = signedPsbt.getFee() - originalFee;
       if (overPaying > additionalFee)
         throw new Error(
           'The payjoin receiver is sending more money to himself',
@@ -149,12 +152,10 @@ class PayjoinClient {
         throw new Error(
           'The payjoin receiver is making us pay more than twice the original fee',
         );
-      const newVirtualSize = utils_1
-        .getGlobalTransaction(payjoinPsbt)
-        .virtualSize();
+      const newVirtualSize = tx.virtualSize();
       // Let's check the difference is only for the fee and that feerate
       // did not changed that much
-      const originalFeeRate = clonedPsbt.getFeeRate();
+      const originalFeeRate = psbt.getFeeRate();
       let expectedFee = utils_1.getFee(originalFeeRate, newVirtualSize);
       // Signing precisely is hard science, give some breathing room for error.
       expectedFee += utils_1.getFee(
@@ -166,11 +167,9 @@ class PayjoinClient {
           'The payjoin receiver increased the fee rate we are paying too much',
         );
     }
-    const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
-    const tx = signedPsbt.extractTransaction();
     // All looks good, schedule original psbt broadcast check.
     await this.wallet.scheduleBroadcastTx(
-      psbt.finalizeAllInputs().extractTransaction().toHex(),
+      psbt.extractTransaction().toHex(),
       BROADCAST_ATTEMPT_TIME,
     );
     // Now broadcast. If this fails, there's a possibility the server is

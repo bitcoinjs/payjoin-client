@@ -45,34 +45,6 @@ function isPaymentFactory(payment: any): (script: Buffer) => boolean {
 }
 const isP2WPKH = isPaymentFactory(payments.p2wpkh);
 
-function getInputSum(psbt: Psbt): number {
-  let result = 0;
-  for (let i = 0; i < psbt.inputCount; i++) {
-    const input = psbt.data.inputs[i];
-
-    if (input.witnessUtxo) {
-      result += input.witnessUtxo.value;
-    } else if (input.nonWitnessUtxo) {
-      const index = getGlobalTransaction(psbt).ins[i].index;
-      result += Transaction.fromBuffer(input.nonWitnessUtxo).outs[index].value;
-    } else {
-      throw new Error(
-        `'Not enough information on input ${i} to compute the fee`,
-      );
-    }
-  }
-  return result;
-}
-
-export function getPsbtFee(psbt: Psbt): number {
-  const inputSum = getInputSum(psbt);
-  let result = inputSum;
-  for (let i = 0; i < psbt.data.outputs.length; i++) {
-    result -= getGlobalTransaction(psbt).outs[i].value;
-  }
-  return result;
-}
-
 export function getFee(feeRate: number, size: number): number {
   return feeRate * size;
 }
