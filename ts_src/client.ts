@@ -161,14 +161,12 @@ export class PayjoinClient {
       );
     }
 
-    const originalBalanceChange = await this.wallet.getBalanceChange(psbt);
-    const payjoinBalanceChange = await this.wallet.getBalanceChange(
-      payjoinPsbt,
-    );
+    const paidBack = await this.wallet.getSumPaidToUs(psbt);
+    const payjoinPaidBack = await this.wallet.getSumPaidToUs(payjoinPsbt);
 
     // TODO: make sure this logic is correct
-    if (payjoinBalanceChange < originalBalanceChange) {
-      const overPaying = payjoinBalanceChange - originalBalanceChange;
+    if (payjoinPaidBack < paidBack) {
+      const overPaying = payjoinPaidBack - paidBack;
       const originalFee = getPsbtFee(clonedPsbt);
       const additionalFee = getPsbtFee(payjoinPsbt) - originalFee;
       if (overPaying > additionalFee)

@@ -207,31 +207,16 @@ class TestWallet implements IPayjoinClientWallet {
     // returns immediately after setting the timeout.
   }
 
-  async getBalanceChange(psbt: bitcoin.Psbt): Promise<number> {
-    let ourTotalIn = 0;
+  async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {
     let ourTotalOut = 0;
-    for (let i = 0; i < psbt.inputCount; i++) {
-      const input = psbt.data.inputs[i];
-      const legacyInput = this.getGlobalTransaction(psbt).ins[i];
-      if (
-        input.bip32Derivation ||
-        this.utxos.find(
-          (value) =>
-            legacyInput.hash.equals(Buffer.from(value.txId)) &&
-            value.vout === legacyInput.index,
-        )
-      )
-        ourTotalIn += input.witnessUtxo!.value;
-    }
     const payment = this.getPayment(this.ecPair.publicKey);
     for (let i = 0; i < psbt.data.outputs.length; i++) {
       const output = psbt.data.outputs[i];
       const outputLegacy = this.getGlobalTransaction(psbt).outs[i];
       if (output.bip32Derivation || payment.output!.equals(outputLegacy.script))
-        ourTotalIn += this.getGlobalTransaction(psbt).outs[i].value;
+        ourTotalOut += outputLegacy.value;
     }
-
-    return ourTotalIn - ourTotalOut;
+    return ourTotalOut;
   }
 
   private getGlobalTransaction(psbt: bitcoin.Psbt): bitcoin.Transaction {

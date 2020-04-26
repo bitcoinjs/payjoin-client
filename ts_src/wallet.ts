@@ -49,10 +49,10 @@ export interface IPayjoinClientWallet {
   scheduleBroadcastTx(txHex: string, milliSeconds: number): Promise<void>;
   /**
    * @async
-   * This takes a psbt and calculates how much your wallet balance is changing.
+   * This takes a psbt and calculates how much it is paying out wallet.
    *
    * @param {Psbt} psbt - A psbt provided from getPsbt or the payjoinProposal from the server.
-   * @return {number} The balance change that would be reflected in your wallet.
+   * @return {number} The sum that would be paid to your wallet.
    */
-  getBalanceChange(psbt: Psbt): Promise<number>;
+  getSumPaidToUs(psbt: Psbt): Promise<number>;
 }

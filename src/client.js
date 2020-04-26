@@ -134,13 +134,11 @@ class PayjoinClient {
         `Receiver's PSBT included inputs which were of a different format than the sent PSBT`,
       );
     }
-    const originalBalanceChange = await this.wallet.getBalanceChange(psbt);
-    const payjoinBalanceChange = await this.wallet.getBalanceChange(
-      payjoinPsbt,
-    );
+    const paidBack = await this.wallet.getSumPaidToUs(psbt);
+    const payjoinPaidBack = await this.wallet.getSumPaidToUs(payjoinPsbt);
     // TODO: make sure this logic is correct
-    if (payjoinBalanceChange < originalBalanceChange) {
-      const overPaying = payjoinBalanceChange - originalBalanceChange;
+    if (payjoinPaidBack < paidBack) {
+      const overPaying = payjoinPaidBack - paidBack;
       const originalFee = utils_1.getPsbtFee(clonedPsbt);
       const additionalFee = utils_1.getPsbtFee(payjoinPsbt) - originalFee;
       if (overPaying > additionalFee)
