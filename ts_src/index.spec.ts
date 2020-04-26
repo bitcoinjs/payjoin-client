@@ -1,6 +1,7 @@
 import { IPayjoinClientWallet, PayjoinClient } from './index';
 import { RegtestUtils } from 'regtest-client';
 import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
+import { Bip32Derivation } from 'bip174/src/lib/interfaces';
 import * as fetch from 'isomorphic-fetch';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as qs from 'querystring';
@@ -210,7 +211,7 @@ class TestWallet implements IPayjoinClientWallet {
   }
 
   async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {
-    const derivationIsMine = (d: any): boolean => {
+    const derivationIsMine = (d: Bip32Derivation): boolean => {
       if (!d.masterFingerprint.equals(this.rootNode.fingerprint)) return false;
       if (!this.rootNode.derivePath(d.path).publicKey.equals(d.pubkey))
         return false;
