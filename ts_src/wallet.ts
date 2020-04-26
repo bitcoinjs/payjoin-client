@@ -52,7 +52,7 @@ export interface IPayjoinClientWallet {
    * This takes a psbt and calculates how much your wallet balance is changing.
    *
    * @param {Psbt} psbt - A psbt provided from getPsbt or the payjoinProposal from the server.
-   * @return {Promise<Psbt>} The balance change that would be reflected in your wallet.
+   * @return {Promise<number>} The balance change that would be reflected in your wallet.
    */
   getBalanceChange(psbt: Psbt): Promise<number>;
 }
