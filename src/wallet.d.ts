@@ -49,10 +49,16 @@ export interface IPayjoinClientWallet {
     scheduleBroadcastTx(txHex: string, milliSeconds: number): Promise<void>;
     /**
      * @async
-     * This takes a psbt and calculates how much it is paying out wallet.
+     * This takes a psbt and calculates the sum paid to us.
+     * Calculated as below. See example in the tests for a BIP32 wallet.
+     * (total value of outputs to me) - (total value of inputs from me)
+     * So if I am sending money to someone, it will be negative, if I am
+     * receiving money from someone it will be positive.
      *
-     * @param {Psbt} psbt - A psbt provided from getPsbt or the payjoinProposal from the server.
-     * @return {number} The sum that would be paid to your wallet.
+     * @param {Psbt} psbt - A psbt provided from getPsbt or the payjoinProposal
+     * from the server.
+     * @return {number} The sum in satoshis that would be paid to your wallet.
+     * Negative if paying out.
      */
     getSumPaidToUs(psbt: Psbt): Promise<number>;
 }
