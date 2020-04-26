@@ -20,11 +20,6 @@ class PayjoinClient {
     const originalTxHex = clonedPsbt.extractTransaction().toHex();
     const broadcastOriginalNow = () => this.wallet.broadcastTx(originalTxHex);
     try {
-      // Schedule original tx broadcast in case something goes wrong.
-      await this.wallet.scheduleBroadcastTx(
-        originalTxHex,
-        BROADCAST_ATTEMPT_TIME,
-      );
       if (utils_1.SUPPORTED_WALLET_FORMATS.indexOf(originalType) === -1) {
         throw new Error(
           'Inputs used do not support payjoin, they must be segwit',
@@ -192,6 +187,12 @@ class PayjoinClient {
       if (response !== '') {
         throw new Error(
           'payjoin tx failed to broadcast.\nReason:\n' + response,
+        );
+      } else {
+        // Schedule original tx broadcast in case something goes wrong.
+        await this.wallet.scheduleBroadcastTx(
+          originalTxHex,
+          BROADCAST_ATTEMPT_TIME,
         );
       }
     } catch (e) {
