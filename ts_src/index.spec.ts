@@ -1,4 +1,4 @@
-import { requestPayjoin, requestPayjoinWithCustomRemoteCall } from './index';
+import { IPayjoinClientWallet, PayjoinClient } from './index';
 import { RegtestUtils } from 'regtest-client';
 import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
 import * as fetch from 'isomorphic-fetch';
@@ -41,10 +41,8 @@ describe('requestPayjoin', () => {
     btcPayClientSegwitP2SH = new BTCPayClient(HOST, KP2, tokens.p2shp2wpkh);
   });
   it('should exist', () => {
-    expect(requestPayjoin).toBeDefined();
-    expect(typeof requestPayjoin).toBe('function');
-    expect(requestPayjoinWithCustomRemoteCall).toBeDefined();
-    expect(typeof requestPayjoinWithCustomRemoteCall).toBe('function');
+    expect(PayjoinClient).toBeDefined();
+    expect(typeof PayjoinClient).toBe('function'); // JS classes are functions
   });
   it('should request p2sh-p2wpkh payjoin', async () => {
     await testPayjoin(btcPayClientSegwitP2SH, getP2SHP2WPKH);
@@ -65,47 +63,29 @@ async function testPayjoin(
   const pjEndpoint = qs.decode(invoice.paymentUrls.BIP21 as string)
     .pj as string;
 
-  const keyPair = bitcoin.ECPair.makeRandom({ network });
-  const payment = getPayment(keyPair.publicKey);
-  const unspent = await regtestUtils.faucet(payment.address!, 2e7);
-  const sendAmount = Math.round(parseFloat(invoice.btcPrice) * 1e8);
-  const psbt = new bitcoin.Psbt({ network })
-    .addInput({
-      hash: unspent.txId,
-      index: unspent.vout,
-      witnessUtxo: {
-        script: payment.output!,
-        value: unspent.value,
-      },
-      ...(payment.redeem ? { redeemScript: payment.redeem.output! } : {}),
-    })
-    .addOutput({
-      address: invoice.bitcoinAddress,
-      value: sendAmount,
-    })
-    .addOutput({
-      address: payment.address!,
-      value: unspent.value - sendAmount - 10000,
-    })
-    .signInput(0, keyPair);
-  const newPsbt = await requestPayjoin(psbt, pjEndpoint);
-  newPsbt.data.inputs.forEach((psbtInput, i) => {
-    if (
-      psbtInput.finalScriptSig === undefined &&
-      psbtInput.finalScriptWitness === undefined
-    ) {
-      newPsbt.signInput(i, keyPair).finalizeInput(i);
-    }
+  const wallet = new TestWallet(
+    invoice.bitcoinAddress,
+    Math.round(parseFloat(invoice.btcPrice) * 1e8),
+    bitcoin.ECPair.makeRandom({ network }),
+    getPayment,
+  );
+  const client = new PayjoinClient({
+    wallet,
+    payjoinUrl: pjEndpoint,
   });
-  const tx = newPsbt.extractTransaction();
-  await regtestUtils.broadcast(tx.toHex());
+
+  await client.run();
+
+  expect(wallet.tx).toBeDefined();
   await regtestUtils.verify({
-    txId: tx.getId(),
-    address: bitcoin.address.fromOutputScript(tx.outs[1].script, network),
+    txId: wallet.tx!.getId(),
+    address: bitcoin.address.fromOutputScript(
+      wallet.tx!.outs[1].script,
+      network,
+    ),
     vout: 1,
-    value: tx.outs[1].value,
+    value: wallet.tx!.outs[1].value,
   });
-  expect(tx).toBeDefined();
 }
 
 function getP2WPKH(pubkey: Buffer) {
@@ -138,4 +118,82 @@ async function getTokens(): Promise<{
   };
 }> {
   return fetch(TOKENURL).then((v) => v.json());
+}
+
+// Use this for testing
+class TestWallet implements IPayjoinClientWallet {
+  tx: bitcoin.Transaction | undefined;
+  timeout: NodeJS.Timeout | undefined;
+
+  constructor(
+    private sendToAddress: string,
+    private sendToAmount: number,
+    private ecPair: bitcoin.ECPairInterface,
+    private getPayment: (pubkey: Buffer) => bitcoin.Payment,
+  ) {}
+
+  async getPsbt() {
+    const payment = this.getPayment(this.ecPair.publicKey);
+    const unspent = await regtestUtils.faucet(payment.address!, 2e7);
+    const sendAmount = this.sendToAmount;
+    return new bitcoin.Psbt({ network })
+      .addInput({
+        hash: unspent.txId,
+        index: unspent.vout,
+        witnessUtxo: {
+          script: payment.output!,
+          value: unspent.value,
+        },
+        ...(payment.redeem ? { redeemScript: payment.redeem.output! } : {}),
+      })
+      .addOutput({
+        address: this.sendToAddress,
+        value: sendAmount,
+      })
+      .addOutput({
+        address: payment.address!,
+        value: unspent.value - sendAmount - 10000,
+      })
+      .signInput(0, this.ecPair);
+  }
+
+  async signPsbt(psbt: bitcoin.Psbt): Promise<bitcoin.Psbt> {
+    psbt.data.inputs.forEach((psbtInput, i) => {
+      if (
+        psbtInput.finalScriptSig === undefined &&
+        psbtInput.finalScriptWitness === undefined
+      ) {
+        psbt.signInput(i, this.ecPair).finalizeInput(i);
+      }
+    });
+    return psbt;
+  }
+
+  async broadcastTx(txHex: string): Promise<string> {
+    try {
+      await regtestUtils.broadcast(txHex);
+      clearTimeout(this.timeout!);
+      this.tx = bitcoin.Transaction.fromHex(txHex);
+    } catch (e) {
+      return e.message;
+    }
+    return '';
+  }
+
+  async scheduleBroadcastTx(txHex: string, ms: number): Promise<void> {
+    this.timeout = setTimeout(
+      ((txHexInner) => async () => {
+        try {
+          await regtestUtils.broadcast(txHexInner);
+        } catch (err) {
+          // failure is good
+          return;
+        }
+        // Do something here to log the fact that it broadcasted successfully
+        // This is for tests so we won't do it.
+      })(txHex),
+      ms,
+    );
+    // returns immediately after setting the timeout.
+  }
 }
