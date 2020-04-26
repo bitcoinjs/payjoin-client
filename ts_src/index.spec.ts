@@ -120,10 +120,19 @@ async function getTokens(): Promise<{
   return fetch(TOKENURL).then((v) => v.json());
 }
 
+interface Unspent {
+  value: number;
+  txId: string;
+  vout: number;
+  address?: string;
+  height?: number;
+}
+
 // Use this for testing
 class TestWallet implements IPayjoinClientWallet {
   tx: bitcoin.Transaction | undefined;
   timeout: NodeJS.Timeout | undefined;
+  utxos: Unspent[] = [];
 
   constructor(
     private sendToAddress: string,
@@ -135,6 +144,7 @@ class TestWallet implements IPayjoinClientWallet {
   async getPsbt() {
     const payment = this.getPayment(this.ecPair.publicKey);
     const unspent = await regtestUtils.faucet(payment.address!, 2e7);
+    this.utxos.push(unspent);
     const sendAmount = this.sendToAmount;
     return new bitcoin.Psbt({ network })
       .addInput({
@@ -202,12 +212,22 @@ class TestWallet implements IPayjoinClientWallet {
     let ourTotalOut = 0;
     for (let i = 0; i < psbt.inputCount; i++) {
       const input = psbt.data.inputs[i];
-      if (input.bip32Derivation) ourTotalIn += input.witnessUtxo!.value;
+      const legacyInput = this.getGlobalTransaction(psbt).ins[i];
+      if (
+        input.bip32Derivation ||
+        this.utxos.find(
+          (value) =>
+            legacyInput.hash.equals(Buffer.from(value.txId)) &&
+            value.vout === legacyInput.index,
+        )
+      )
+        ourTotalIn += input.witnessUtxo!.value;
     }
-
+    const payment = this.getPayment(this.ecPair.publicKey);
     for (let i = 0; i < psbt.data.outputs.length; i++) {
       const output = psbt.data.outputs[i];
-      if (output.bip32Derivation)
+      const outputLegacy = this.getGlobalTransaction(psbt).outs[i];
+      if (output.bip32Derivation || payment.output!.equals(outputLegacy.script))
         ourTotalIn += this.getGlobalTransaction(psbt).outs[i].value;
     }
 
