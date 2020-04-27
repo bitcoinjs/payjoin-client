@@ -36,7 +36,7 @@
   ],
   "dependencies": {
     "@types/isomorphic-fetch": "0.0.35",
-    "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#4eb698df506edd47dfe760df3642efc001220415",
+    "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#de0bbf51e59e74dad62d4a15f4913e6bd6a9f3c6",
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
