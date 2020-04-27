@@ -47,10 +47,7 @@ exports.getFee = getFee;
 function checkSanity(psbt) {
   const result = {};
   psbt.data.inputs.forEach((value, index) => {
-    const sanityResult = checkInputSanity(
-      value,
-      getGlobalTransaction(psbt).ins[index],
-    );
+    const sanityResult = checkInputSanity(value, psbt.txInputs[index]);
     if (sanityResult.length > 0) {
       result[index] = sanityResult;
     }
@@ -189,15 +186,8 @@ function isFinalized(input) {
   );
 }
 exports.isFinalized = isFinalized;
-function getGlobalTransaction(psbt) {
-  // TODO: bitcoinjs-lib to expose outputs to Psbt class
-  // instead of using private (JS has no private) attributes
-  // @ts-ignore
-  return psbt.__CACHE.__TX;
-}
-exports.getGlobalTransaction = getGlobalTransaction;
 function getInputIndex(psbt, prevOutHash, prevOutIndex) {
-  for (const [index, input] of getGlobalTransaction(psbt).ins.entries()) {
+  for (const [index, input] of psbt.txInputs.entries()) {
     if (
       Buffer.compare(input.hash, prevOutHash) === 0 &&
       input.index === prevOutIndex

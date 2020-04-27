@@ -55,7 +55,7 @@ class PayjoinClient {
       }
       const ourInputIndexes = [];
       // Add back input data from the original psbt (such as witnessUtxo)
-      utils_1.getGlobalTransaction(psbt).ins.forEach((originalInput, index) => {
+      psbt.txInputs.forEach((originalInput, index) => {
         const payjoinIndex = utils_1.getInputIndex(
           payjoinPsbt,
           originalInput.hash,
@@ -67,8 +67,7 @@ class PayjoinClient {
           );
         }
         if (
-          originalInput.sequence !==
-          utils_1.getGlobalTransaction(payjoinPsbt).ins[payjoinIndex].sequence
+          originalInput.sequence !== payjoinPsbt.txInputs[payjoinIndex].sequence
         ) {
           throw new Error(
             `Inputs from original PSBT have a different sequence`,
@@ -105,32 +104,22 @@ class PayjoinClient {
       }
       for (let index = 0; index < payjoinPsbt.data.outputs.length; index++) {
         const output = payjoinPsbt.data.outputs[index];
-        const outputLegacy = utils_1.getGlobalTransaction(payjoinPsbt).outs[
-          index
-        ];
+        const outputLegacy = payjoinPsbt.txOutputs[index];
         // Make sure only our output has any information
         delete output.bip32Derivation;
         psbt.data.outputs.forEach((originalOutput, i) => {
           // update the payjoin outputs
-          const originalOutputLegacy = utils_1.getGlobalTransaction(psbt).outs[
-            i
-          ];
+          const originalOutputLegacy = psbt.txOutputs[i];
           if (outputLegacy.script.equals(originalOutputLegacy.script))
             payjoinPsbt.updateOutput(index, originalOutput);
         });
       }
-      if (
-        utils_1.getGlobalTransaction(payjoinPsbt).version !==
-        utils_1.getGlobalTransaction(psbt).version
-      ) {
+      if (payjoinPsbt.version !== psbt.version) {
         throw new Error(
           'The version field of the transaction has been modified',
         );
       }
-      if (
-        utils_1.getGlobalTransaction(payjoinPsbt).locktime !==
-        utils_1.getGlobalTransaction(psbt).locktime
-      ) {
+      if (payjoinPsbt.locktime !== psbt.locktime) {
         throw new Error(
           'The LockTime field of the transaction has been modified',
         );

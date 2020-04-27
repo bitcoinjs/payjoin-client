@@ -231,7 +231,7 @@ class TestWallet implements IPayjoinClientWallet {
         output.bip32Derivation &&
         output.bip32Derivation.some(derivationIsMine)
       )
-        ourTotalIn += this.getGlobalTransaction(psbt).outs[i].value;
+        ourTotalIn += psbt.txOutputs[i].value;
     }
 
     return ourTotalIn - ourTotalOut;
@@ -252,12 +252,5 @@ class TestWallet implements IPayjoinClientWallet {
         network,
       });
     }
-  }
-
-  private getGlobalTransaction(psbt: bitcoin.Psbt): bitcoin.Transaction {
-    // TODO: bitcoinjs-lib to expose outputs to Psbt class
-    // instead of using private (JS has no private) attributes
-    // @ts-ignore
-    return psbt.__CACHE.__TX;
   }
 }

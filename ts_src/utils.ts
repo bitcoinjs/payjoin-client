@@ -3,7 +3,7 @@ import {
   Psbt,
   script as bscript,
   Transaction,
-  TxInput,
+  PsbtTxInput,
 } from 'bitcoinjs-lib';
 import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
 
@@ -52,10 +52,7 @@ export function getFee(feeRate: number, size: number): number {
 export function checkSanity(psbt: Psbt): { [index: number]: string[] } {
   const result: { [index: number]: string[] } = {};
   psbt.data.inputs.forEach((value, index): void => {
-    const sanityResult = checkInputSanity(
-      value,
-      getGlobalTransaction(psbt).ins[index],
-    );
+    const sanityResult = checkInputSanity(value, psbt.txInputs[index]);
     if (sanityResult.length > 0) {
       result[index] = sanityResult;
     }
@@ -63,7 +60,7 @@ export function checkSanity(psbt: Psbt): { [index: number]: string[] } {
   return result;
 }
 
-function checkInputSanity(input: PsbtInput, txInput: TxInput): string[] {
+function checkInputSanity(input: PsbtInput, txInput: PsbtTxInput): string[] {
   const errors: string[] = [];
   if (isFinalized(input)) {
     if (input.partialSig && input.partialSig.length > 0) {
@@ -212,19 +209,12 @@ export function isFinalized(input: PsbtInput): boolean {
   );
 }
 
-export function getGlobalTransaction(psbt: Psbt): Transaction {
-  // TODO: bitcoinjs-lib to expose outputs to Psbt class
-  // instead of using private (JS has no private) attributes
-  // @ts-ignore
-  return psbt.__CACHE.__TX;
-}
-
 export function getInputIndex(
   psbt: Psbt,
   prevOutHash: Buffer,
   prevOutIndex: number,
 ): number {
-  for (const [index, input] of getGlobalTransaction(psbt).ins.entries()) {
+  for (const [index, input] of psbt.txInputs.entries()) {
     if (
       Buffer.compare(input.hash, prevOutHash) === 0 &&
       input.index === prevOutIndex
