@@ -20,12 +20,13 @@
     "format:ci": "npm run prettier -- --check",
     "gitdiff": "git diff --exit-code",
     "gitdiff:ci": "npm run build && npm run gitdiff",
+    "integration": "JEST_TYPE=integration npm run unit",
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "prepublishOnly": "npm run test && npm run gitdiff",
     "prettier": "prettier 'ts_src/**/*.ts' --ignore-path ./.prettierignore",
     "prettierjs": "prettier 'src/**/*.js' --ignore-path ./.prettierignore",
     "test": "npm run build && npm run format:ci && npm run lint && npm run unit",
-    "unit": "jest --config=jest.json --runInBand"
+    "unit": "jest --config=jest.config.js --runInBand"
   },
   "repository": {
     "type": "git",

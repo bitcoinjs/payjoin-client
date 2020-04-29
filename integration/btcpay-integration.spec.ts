@@ -1,4 +1,4 @@
-import { IPayjoinClientWallet, PayjoinClient } from './index';
+import { IPayjoinClientWallet, PayjoinClient } from '..';
 import { RegtestUtils } from 'regtest-client';
 import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
 import * as fetch from 'isomorphic-fetch';

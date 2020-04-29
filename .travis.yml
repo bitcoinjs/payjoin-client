@@ -4,7 +4,7 @@ language: node_js
 services:
   - docker
 before_install:
-  - if [ $TEST_SUITE = "test" ] || [ $TEST_SUITE = "coverage" ]; then
+  - if [ $TEST_SUITE = "integration" ] ; then
       docker pull junderw/btcpay-client-test-server &&
       docker run -d -p 127.0.0.1:49392:49392 -p 127.0.0.1:8080:8080 -p 127.0.0.1:18271:18271 junderw/btcpay-client-test-server &&
       docker ps -a &&
@@ -18,6 +18,8 @@ matrix:
   include:
     - node_js: "lts/*"
       env: TEST_SUITE=gitdiff:ci
+    - node_js: "lts/*"
+      env: TEST_SUITE=integration
     - node_js: "lts/*"
       env: TEST_SUITE=coverage
 env:
