@@ -37,7 +37,7 @@ export class PayjoinClient {
     try {
       if (SUPPORTED_WALLET_FORMATS.indexOf(originalType) === -1) {
         throw new Error(
-          'Inputs used do not support payjoin, they must be segwit',
+          'Inputs used do not support payjoin, they must be segwit (p2wpkh or p2sh-p2wpkh)',
         );
       }
 
@@ -91,12 +91,14 @@ export class PayjoinClient {
           originalInput.sequence !== payjoinPsbt.txInputs[payjoinIndex].sequence
         ) {
           throw new Error(
-            `Inputs from original PSBT have a different sequence`,
+            `Input #${index} from original PSBT have a different sequence`,
           );
         }
 
         payjoinPsbt.updateInput(payjoinIndex, psbt.data.inputs[index]);
         const payjoinPsbtInput = payjoinPsbt.data.inputs[payjoinIndex];
+        // In theory these shouldn't be here, but just in case, we need to
+        // re-sign so this is throwing away the invalidated data.
         delete payjoinPsbtInput.partialSig;
         delete payjoinPsbtInput.finalScriptSig;
         delete payjoinPsbtInput.finalScriptWitness;
@@ -105,9 +107,15 @@ export class PayjoinClient {
       });
 
       const sanityResult = checkSanity(payjoinPsbt);
-      if (Object.keys(sanityResult).length > 0) {
+      if (
+        !sanityResult.every((inputErrors): boolean => inputErrors.length === 0)
+      ) {
         throw new Error(
-          `Receiver's PSBT is insane: ${JSON.stringify(sanityResult)}`,
+          `Receiver's PSBT is insane:\n${JSON.stringify(
+            sanityResult,
+            null,
+            2,
+          )}`,
         );
       }
 
@@ -208,7 +216,7 @@ export class PayjoinClient {
           'payjoin tx failed to broadcast.\nReason:\n' + response,
         );
       } else {
-        // Schedule original tx broadcast in case something goes wrong.
+        // Schedule original tx broadcast after succeeding, just in case.
         await this.wallet.scheduleBroadcastTx(
           originalTxHex,
           BROADCAST_ATTEMPT_TIME,

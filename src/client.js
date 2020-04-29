@@ -22,7 +22,7 @@ class PayjoinClient {
     try {
       if (utils_1.SUPPORTED_WALLET_FORMATS.indexOf(originalType) === -1) {
         throw new Error(
-          'Inputs used do not support payjoin, they must be segwit',
+          'Inputs used do not support payjoin, they must be segwit (p2wpkh or p2sh-p2wpkh)',
         );
       }
       // We make sure we don't send unnecessary information to the receiver
@@ -70,20 +70,26 @@ class PayjoinClient {
           originalInput.sequence !== payjoinPsbt.txInputs[payjoinIndex].sequence
         ) {
           throw new Error(
-            `Inputs from original PSBT have a different sequence`,
+            `Input #${index} from original PSBT have a different sequence`,
           );
         }
         payjoinPsbt.updateInput(payjoinIndex, psbt.data.inputs[index]);
         const payjoinPsbtInput = payjoinPsbt.data.inputs[payjoinIndex];
+        // In theory these shouldn't be here, but just in case, we need to
+        // re-sign so this is throwing away the invalidated data.
         delete payjoinPsbtInput.partialSig;
         delete payjoinPsbtInput.finalScriptSig;
         delete payjoinPsbtInput.finalScriptWitness;
         ourInputIndexes.push(payjoinIndex);
       });
       const sanityResult = utils_1.checkSanity(payjoinPsbt);
-      if (Object.keys(sanityResult).length > 0) {
+      if (!sanityResult.every((inputErrors) => inputErrors.length === 0)) {
         throw new Error(
-          `Receiver's PSBT is insane: ${JSON.stringify(sanityResult)}`,
+          `Receiver's PSBT is insane:\n${JSON.stringify(
+            sanityResult,
+            null,
+            2,
+          )}`,
         );
       }
       // We make sure we don't sign what should not be signed
@@ -178,7 +184,7 @@ class PayjoinClient {
           'payjoin tx failed to broadcast.\nReason:\n' + response,
         );
       } else {
-        // Schedule original tx broadcast in case something goes wrong.
+        // Schedule original tx broadcast after succeeding, just in case.
         await this.wallet.scheduleBroadcastTx(
           originalTxHex,
           BROADCAST_ATTEMPT_TIME,

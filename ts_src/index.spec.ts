@@ -185,7 +185,6 @@ class TestWallet implements IPayjoinClientWallet {
   async broadcastTx(txHex: string): Promise<string> {
     try {
       await regtestUtils.broadcast(txHex);
-      clearTimeout(this.timeout!);
       this.tx = bitcoin.Transaction.fromHex(txHex);
     } catch (e) {
       return e.message;
@@ -203,11 +202,18 @@ class TestWallet implements IPayjoinClientWallet {
           return;
         }
         // Do something here to log the fact that it broadcasted successfully
+        // broadcasting successfully is a bad thing. It means the payjoin
+        // transaction didn't propagate OR the merchant double spent their input
+        // to trick you into paying twice.
         // This is for tests so we won't do it.
       })(txHex),
       ms,
     );
     // returns immediately after setting the timeout.
+
+    // But since this is a test, and we don't want the test to wait 2 minutes
+    // we will cancel it immediately after
+    clearTimeout(this.timeout);
   }
 
   async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {

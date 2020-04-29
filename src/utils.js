@@ -4,20 +4,24 @@ const bitcoinjs_lib_1 = require('bitcoinjs-lib');
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
   /// <summary>
-  /// Derive P2PKH addresses (P2PKH)
-  /// Only use this for legacy code or coins not supporting segwit
+  /// This type is reserved for scripts that are unsupported.
   /// </summary>
-  ScriptPubKeyType[(ScriptPubKeyType['Legacy'] = 0)] = 'Legacy';
+  ScriptPubKeyType[(ScriptPubKeyType['Unsupported'] = 0)] = 'Unsupported';
+  /// <summary>
+  /// Derive P2PKH addresses (P2PKH)
+  /// Only use this for legacy code or coins not supporting segwit.
+  /// </summary>
+  ScriptPubKeyType[(ScriptPubKeyType['Legacy'] = 1)] = 'Legacy';
   /// <summary>
   /// Derive Segwit (Bech32) addresses (P2WPKH)
   /// This will result in the cheapest fees. This is the recommended choice.
   /// </summary>
-  ScriptPubKeyType[(ScriptPubKeyType['Segwit'] = 1)] = 'Segwit';
+  ScriptPubKeyType[(ScriptPubKeyType['Segwit'] = 2)] = 'Segwit';
   /// <summary>
   /// Derive P2SH address of a Segwit address (P2WPKH-P2SH)
   /// Use this when you worry that your users do not support Bech address format.
   /// </summary>
-  ScriptPubKeyType[(ScriptPubKeyType['SegwitP2SH'] = 2)] = 'SegwitP2SH';
+  ScriptPubKeyType[(ScriptPubKeyType['SegwitP2SH'] = 3)] = 'SegwitP2SH';
 })(
   (ScriptPubKeyType =
     exports.ScriptPubKeyType || (exports.ScriptPubKeyType = {})),
@@ -26,31 +30,14 @@ exports.SUPPORTED_WALLET_FORMATS = [
   ScriptPubKeyType.Segwit,
   ScriptPubKeyType.SegwitP2SH,
 ];
-// The following is lifted straight from:
-// https://github.com/bitcoinjs/bitcoinjs-lib/blob/f67aab371c1d47684b3c211643a39e8e0295b306/src/psbt.js
-// Seems pretty useful, maybe we should export classifyScript() from bitcoinjs-lib?
-function isPaymentFactory(payment) {
-  return (script) => {
-    try {
-      payment({ output: script });
-      return true;
-    } catch (err) {
-      return false;
-    }
-  };
-}
-const isP2WPKH = isPaymentFactory(bitcoinjs_lib_1.payments.p2wpkh);
 function getFee(feeRate, size) {
   return feeRate * size;
 }
 exports.getFee = getFee;
 function checkSanity(psbt) {
-  const result = {};
+  const result = [];
   psbt.data.inputs.forEach((value, index) => {
-    const sanityResult = checkInputSanity(value, psbt.txInputs[index]);
-    if (sanityResult.length > 0) {
-      result[index] = sanityResult;
-    }
+    result[index] = checkInputSanity(value, psbt.txInputs[index]);
   });
   return result;
 }
@@ -64,14 +51,14 @@ function checkInputSanity(input, txInput) {
     if (input.bip32Derivation && input.bip32Derivation.length > 0) {
       errors.push('Input finalized, but hd keypaths are not empty');
     }
-    if (input.sighashType) {
-      errors.push('Input finalized, but sighash type is not null');
+    if (input.sighashType !== undefined) {
+      errors.push('Input finalized, but sighash type is not empty');
     }
     if (input.redeemScript) {
-      errors.push('Input finalized, but redeem script is not null');
+      errors.push('Input finalized, but redeem script is not empty');
     }
     if (input.witnessScript) {
-      errors.push('Input finalized, but witness script is not null');
+      errors.push('Input finalized, but witness script is not empty');
     }
   }
   if (input.witnessUtxo && input.nonWitnessUtxo) {
@@ -80,7 +67,7 @@ function checkInputSanity(input, txInput) {
   if (input.witnessScript && !input.witnessUtxo) {
     errors.push('witness script present but no witness utxo');
   }
-  if (!input.finalScriptWitness && !input.witnessUtxo) {
+  if (input.finalScriptWitness && !input.witnessUtxo) {
     errors.push('final witness script present but no witness utxo');
   }
   if (input.nonWitnessUtxo) {
@@ -135,35 +122,34 @@ function checkInputSanity(input, txInput) {
   return errors;
 }
 function getInputsScriptPubKeyType(psbt) {
-  if (psbt.data.inputs.filter((i) => !i.witnessUtxo).length > 0)
-    throw new Error('The psbt should be finalized with witness information');
+  if (
+    psbt.data.inputs.filter((i) => !i.witnessUtxo && !i.nonWitnessUtxo).length >
+    0
+  )
+    throw new Error(
+      'The psbt should be able to be finalized with utxo information',
+    );
   const types = new Set();
-  for (const input of psbt.data.inputs) {
-    const inputScript = input.witnessUtxo.script;
-    const redeemScript =
-      input.redeemScript ||
-      (input.finalScriptSig &&
-        bitcoinjs_lib_1.script.decompile(input.finalScriptSig)[0]) ||
-      Buffer.from([]);
-    if (typeof redeemScript === 'number') continue;
-    const type = getInputScriptPubKeyType(inputScript, redeemScript);
-    types.add(type);
+  for (let i = 0; i < psbt.data.inputs.length; i++) {
+    const type = psbt.getInputType(i);
+    switch (type) {
+      case 'witnesspubkeyhash':
+        types.add(ScriptPubKeyType.Segwit);
+        break;
+      case 'p2sh-witnesspubkeyhash':
+        types.add(ScriptPubKeyType.SegwitP2SH);
+        break;
+      case 'pubkeyhash':
+        types.add(ScriptPubKeyType.Legacy);
+        break;
+      default:
+        types.add(ScriptPubKeyType.Unsupported);
+    }
   }
   if (types.size > 1) throw new Error('Inputs must all be the same type');
   return types.values().next().value;
 }
 exports.getInputsScriptPubKeyType = getInputsScriptPubKeyType;
-// TODO: I think these checks are correct, get Jon to double check they do what
-// I think they do...
-// There might be some extra stuff needed for ScriptPubKeyType.SegwitP2SH.
-function getInputScriptPubKeyType(inputScript, redeemScript) {
-  if (isP2WPKH(inputScript)) {
-    return ScriptPubKeyType.Segwit;
-  } else if (isP2WPKH(redeemScript)) {
-    return ScriptPubKeyType.SegwitP2SH;
-  }
-  return ScriptPubKeyType.Legacy;
-}
 function redeemScriptToScriptPubkey(redeemScript) {
   return bitcoinjs_lib_1.payments.p2sh({ redeem: { output: redeemScript } })
     .output;
