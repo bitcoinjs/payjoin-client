@@ -1,7 +1,6 @@
 import { IPayjoinClientWallet, PayjoinClient } from './index';
 import { RegtestUtils } from 'regtest-client';
 import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
-import { Bip32Derivation } from 'bip174/src/lib/interfaces';
 import * as fetch from 'isomorphic-fetch';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as qs from 'querystring';
@@ -217,26 +216,15 @@ class TestWallet implements IPayjoinClientWallet {
   }
 
   async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {
-    const derivationIsMine = (d: Bip32Derivation): boolean => {
-      if (!d.masterFingerprint.equals(this.rootNode.fingerprint)) return false;
-      if (!this.rootNode.derivePath(d.path).publicKey.equals(d.pubkey))
-        return false;
-      return true;
-    };
     let ourTotalIn = 0;
     let ourTotalOut = 0;
     for (let i = 0; i < psbt.inputCount; i++) {
-      const input = psbt.data.inputs[i];
-      if (input.bip32Derivation && input.bip32Derivation.some(derivationIsMine))
-        ourTotalOut += input.witnessUtxo!.value;
+      if (psbt.inputHasHDKey(i, this.rootNode))
+        ourTotalOut += psbt.data.inputs[i].witnessUtxo!.value;
     }
 
     for (let i = 0; i < psbt.data.outputs.length; i++) {
-      const output = psbt.data.outputs[i];
-      if (
-        output.bip32Derivation &&
-        output.bip32Derivation.some(derivationIsMine)
-      )
+      if (psbt.outputHasHDKey(i, this.rootNode))
         ourTotalIn += psbt.txOutputs[i].value;
     }
 
