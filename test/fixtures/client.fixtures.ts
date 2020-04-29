@@ -48,5 +48,46 @@ export default {
           'cHNidP8BAFICAAAAAXmSxJ95noyq1oUFqPuKHoZW20QWzduxqeN0Ro6IallkAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUcwRAIgXe1JNvFGQ34RNrNqoHeajhUHlBBRh5mZVWK0cpm1C50CIAps8ABtDVmfcL87uPfZezKU2/9dFBz0kxGaCQ2tOmTYAQAA',
       },
     },
+    {
+      description: 'should throw when payjoin has globalxpub',
+      exception: "GlobalXPubs should not be included in the receiver's PSBT",
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAATwEENYfPA+I1YCmAAAAAfD1s5z8bo4zW3Gcu+UKRlSWWNTqMw0YPMRSPfwAj/yUDzCWNKVWnWB/fac8+aQFXs8OCyFm9TO7Y5J/EKYilXBsQvZnJAywAAIAAAACAAAAAgAABAR8sDwEAAAAAABYAFL2ZyQMv/In1PSScRofmzbEatoddIgICr3UDfjGN+HuhoOQIEXkY+lkm/QTLIe319+U9hveR1W1IMEUCIQC/dRSc5hiFfRg2Ndxb6+fNdotff4UjdCKEpKHEQ8MDqwIgDySBNHLdAiTsW9uEhFfmKya++sLGmJkPTMuji0g/Mi4BAAA=',
+      },
+    },
+    {
+      description: 'should throw when payjoin has bip32Derivation',
+      exception:
+        "Keypath information should not be included in the receiver's PSBT",
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAAVmJblimSxLc+35x7qXXCdLMPpxGuE/3cmnIKbkVoi+BAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAKlbaYs1G4wZAFeuTGSOXNQiYZXO2b0SPvGCWvBqCKjpAiAw1b/K7Kj0DwT6IPAa0lRTF/87zREFB06lQw29C0oT7AEiBgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbQi9mckDAAAAAAAA',
+      },
+    },
+    {
+      description: 'should throw when payjoin missing input from original',
+      exception: "Receiver's PSBT is missing input #0 from the sent PSBT",
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAAdoRvMcqH3uh2NVL2FGlJxHL/8N4DIgRXLG8CeiP7UHNAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAPkHBAnXbxit4W8hymbVz+jiIH4EiY4ZzbGueMFePio8AiAVNhvfQhRhlgon4i2W6ySVpYuK/EXxeLzzF87gwlTBXQEAAA==',
+      },
+    },
+    {
+      description: 'should throw when payjoin has different input sequence',
+      exception: 'Input #0 from original PSBT have a different sequence',
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAAqAAAAAUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
+      },
+    },
   ],
 };
