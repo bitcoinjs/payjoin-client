@@ -17,7 +17,7 @@ export class PayjoinRequester implements IPayjoinRequester {
 
   async requestPayjoin(psbt: Psbt): Promise<Psbt> {
     if (!psbt) {
-      throw new Error();
+      throw new Error('Need to pass psbt');
     }
 
     const response = await fetch(this.endpointUrl, {
@@ -26,7 +26,15 @@ export class PayjoinRequester implements IPayjoinRequester {
         'Content-Type': 'text/plain',
       }),
       body: psbt.toBase64(),
-    });
+    }).catch(
+      (v: Error): Response =>
+        ({
+          ok: false,
+          async text(): Promise<string> {
+            return v.message;
+          },
+        } as any),
+    );
     const responseText = await response.text();
 
     if (!response.ok) {

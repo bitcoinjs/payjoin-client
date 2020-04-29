@@ -8,6 +8,7 @@ switch (process.env['JEST_TYPE']) {
     testRegex = '/test/.*\\.spec\\.ts$';
     break;
 }
+
 module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
@@ -24,6 +25,9 @@ module.exports = {
       lines: 60,
     },
   },
+  setupFiles: [
+    './jest-setup.js'
+  ],
   collectCoverageFrom: ['ts_src/**/*.ts', '!**/node_modules/**'],
   coverageReporters: ['lcov', 'text'],
   verbose: true,

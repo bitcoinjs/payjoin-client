@@ -8,7 +8,7 @@ class PayjoinRequester {
   }
   async requestPayjoin(psbt) {
     if (!psbt) {
-      throw new Error();
+      throw new Error('Need to pass psbt');
     }
     const response = await fetch(this.endpointUrl, {
       method: 'POST',
@@ -16,7 +16,12 @@ class PayjoinRequester {
         'Content-Type': 'text/plain',
       }),
       body: psbt.toBase64(),
-    });
+    }).catch((v) => ({
+      ok: false,
+      async text() {
+        return v.message;
+      },
+    }));
     const responseText = await response.text();
     if (!response.ok) {
       throw new Error(responseText);

@@ -25,11 +25,10 @@
     "resolveJsonModule": true
   },
   "include": [
-      "ts_src/**/*.ts",
-      "ts_src/**/*.json"
+      "ts_src/**/*.ts"
   ],
   "exclude": [
-      "**/*.spec.ts",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "**/*.json"
   ]
 }
