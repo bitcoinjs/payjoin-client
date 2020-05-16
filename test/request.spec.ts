@@ -20,9 +20,11 @@ describe('payjoin requester', () => {
     await expect(requester.requestPayjoin()).rejects.toThrowError(
       /Need to pass psbt/,
     );
-    fetchMock.mockRejectOnce(new Error('failed you noob'));
+    fetchMock.mockRejectOnce(new Error());
     await expect(
       requester.requestPayjoin(bitcoin.Psbt.fromBase64(PSBTTEXT)),
-    ).rejects.toThrowError(/failed you noob/);
+    ).rejects.toThrowError(
+      /Something went wrong when requesting the payjoin endpoint./,
+    );
   });
 });

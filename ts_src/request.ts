@@ -1,6 +1,47 @@
 import { Psbt } from 'bitcoinjs-lib';
 import * as fetch from 'isomorphic-fetch';
 
+/**
+ * Handle known errors and return a generic message for unkonw errors.
+ *
+ * This prevents people integrating this library introducing an accidental
+ * phishing vulnerability in their app by displaying a server generated
+ * messages in their UI.
+ *
+ * We still expose the error code so custom handling of specific or unknown
+ * error codes can still be added in the app.
+ */
+export class PayjoinEndpointError extends Error {
+  static messageMap: { [key: string]: string } = {
+    'leaking-data':
+      'Key path information or GlobalXPubs should not be included in the original PSBT.',
+    'psbt-not-finalized': 'The original PSBT must be finalized.',
+    unavailable: 'The payjoin endpoint is not available for now.',
+    'out-of-utxos':
+      'The receiver does not have any UTXO to contribute in a payjoin proposal.',
+    'not-enough-money':
+      'The receiver added some inputs but could not bump the fee of the payjoin proposal.',
+    'insane-psbt': 'Some consistency check on the PSBT failed.',
+    'version-unsupported': 'This version of payjoin is not supported.',
+    'need-utxo-information': 'The witness UTXO or non witness UTXO is missing.',
+    'invalid-transaction': 'The original transaction is invalid for payjoin.',
+  };
+
+  static codeToMessage(code: string): string {
+    return (
+      this.messageMap[code] ||
+      'Something went wrong when requesting the payjoin endpoint.'
+    );
+  }
+
+  code: string;
+
+  constructor(code: string) {
+    super(PayjoinEndpointError.codeToMessage(code));
+    this.code = code;
+  }
+}
+
 export interface IPayjoinRequester {
   /**
    * @async
@@ -38,7 +79,12 @@ export class PayjoinRequester implements IPayjoinRequester {
     const responseText = await response.text();
 
     if (!response.ok) {
-      throw new Error(responseText);
+      let errorCode = '';
+      try {
+        errorCode = JSON.parse(responseText).errorCode;
+      } catch (err) {}
+
+      throw new PayjoinEndpointError(errorCode);
     }
 
     return Psbt.fromBase64(responseText);
