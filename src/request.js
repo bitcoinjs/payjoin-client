@@ -1,7 +1,6 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 const bitcoinjs_lib_1 = require('bitcoinjs-lib');
-const fetch = require('isomorphic-fetch');
 /**
  * Handle known errors and return a generic message for unkonw errors.
  *

@@ -1,5 +1,4 @@
 import { Psbt } from 'bitcoinjs-lib';
-import * as fetch from 'isomorphic-fetch';
 
 /**
  * Handle known errors and return a generic message for unkonw errors.
