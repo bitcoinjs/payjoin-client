@@ -37,8 +37,7 @@
   ],
   "dependencies": {
     "@types/isomorphic-fetch": "0.0.35",
-    "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#f87a20caa7828f6f8c29049c73efd369ff81c57b",
-    "isomorphic-fetch": "^2.2.1"
+    "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#f87a20caa7828f6f8c29049c73efd369ff81c57b"
   },
   "devDependencies": {
     "@types/jest": "^25.2.1",
@@ -60,5 +59,8 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Kukks/payjoin-client-js/issues"
+  },
+  "optionalDependencies": {
+    "isomorphic-fetch": "^2.2.1"
   }
 }
