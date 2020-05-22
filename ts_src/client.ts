@@ -1,3 +1,4 @@
+import { Psbt } from 'bitcoinjs-lib';
 import { IPayjoinRequester, PayjoinRequester } from './request';
 import { IPayjoinClientWallet } from './wallet';
 import {
@@ -22,6 +23,33 @@ export class PayjoinClient {
     } else {
       this.payjoinRequester = new PayjoinRequester(opts.payjoinUrl);
     }
+  }
+
+  private async getSumPaidToUs(psbt: Psbt): Promise<number> {
+    let sumPaidToUs = 0;
+
+    for (const input of psbt.data.inputs) {
+      const { bip32Derivation } = input;
+      const pathFromRoot = bip32Derivation && bip32Derivation[0].path;
+      if (
+        await this.wallet.isOwnOutputScript(
+          input.witnessUtxo!.script,
+          pathFromRoot,
+        )
+      ) {
+        sumPaidToUs -= input.witnessUtxo!.value;
+      }
+    }
+
+    for (const [index, output] of Object.entries(psbt.txOutputs)) {
+      const { bip32Derivation } = psbt.data.outputs[parseInt(index, 10)];
+      const pathFromRoot = bip32Derivation && bip32Derivation[0].path;
+      if (await this.wallet.isOwnOutputScript(output.script, pathFromRoot)) {
+        sumPaidToUs += output.value;
+      }
+    }
+
+    return sumPaidToUs;
   }
 
   async run(): Promise<void> {
@@ -172,8 +200,8 @@ export class PayjoinClient {
         );
       }
 
-      const paidBack = await this.wallet.getSumPaidToUs(psbt);
-      const payjoinPaidBack = await this.wallet.getSumPaidToUs(payjoinPsbt);
+      const paidBack = await this.getSumPaidToUs(psbt);
+      const payjoinPaidBack = await this.getSumPaidToUs(payjoinPsbt);
 
       const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       const tx = signedPsbt.extractTransaction();

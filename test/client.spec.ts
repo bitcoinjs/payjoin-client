@@ -9,6 +9,13 @@ import { default as VECTORS } from './fixtures/client.fixtures';
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
 
+const p2shp2wpkhOutputScript = (pubkey: Buffer) =>
+  bitcoin.payments.p2sh({
+    redeem: bitcoin.payments.p2wpkh({ pubkey: pubkey }),
+  }).output;
+const p2wpkhOutputScript = (pubkey: Buffer) =>
+  bitcoin.payments.p2wpkh({ pubkey }).output;
+
 describe('requestPayjoin', () => {
   it('should exist', () => {
     expect(PayjoinClient).toBeDefined();
@@ -16,24 +23,27 @@ describe('requestPayjoin', () => {
   });
   VECTORS.valid.forEach((f) => {
     it('should request p2sh-p2wpkh payjoin', async () => {
-      await testPayjoin(f.p2shp2wpkh);
+      await testPayjoin(f.p2shp2wpkh, p2shp2wpkhOutputScript);
     });
     it('should request p2wpkh payjoin', async () => {
-      await testPayjoin(f.p2wpkh);
+      await testPayjoin(f.p2wpkh, p2wpkhOutputScript);
     });
   });
   VECTORS.invalid.forEach((f) => {
     it(f.description, async () => {
-      await expect(testPayjoin(f.vector)).rejects.toThrowError(
+      await expect(testPayjoin(f.vector, () => {})).rejects.toThrowError(
         new RegExp(f.exception),
       );
     });
   });
 });
 
-async function testPayjoin(vector: any): Promise<void> {
+async function testPayjoin(
+  vector: any,
+  getOutputScript: Function,
+): Promise<void> {
   const rootNode = bitcoin.bip32.fromBase58(VECTORS.privateRoot, network);
-  const wallet = new TestWallet(vector.wallet, rootNode);
+  const wallet = new TestWallet(vector.wallet, rootNode, getOutputScript);
   const payjoinRequester = new DummyRequester(vector.payjoin);
   const client = new PayjoinClient({
     wallet,
@@ -54,6 +64,7 @@ class TestWallet implements IPayjoinClientWallet {
   constructor(
     private psbtString: string,
     private rootNode: bitcoin.BIP32Interface,
+    private getOutputScript: Function,
   ) {}
 
   async getPsbt() {
@@ -81,20 +92,14 @@ class TestWallet implements IPayjoinClientWallet {
     return txHex + ms + 'x' ? undefined : undefined;
   }
 
-  async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {
-    let ourTotalIn = 0;
-    let ourTotalOut = 0;
-    for (let i = 0; i < psbt.inputCount; i++) {
-      if (psbt.inputHasHDKey(i, this.rootNode))
-        ourTotalOut += psbt.data.inputs[i].witnessUtxo!.value;
-    }
-
-    for (let i = 0; i < psbt.data.outputs.length; i++) {
-      if (psbt.outputHasHDKey(i, this.rootNode))
-        ourTotalIn += psbt.txOutputs[i].value;
-    }
-
-    return ourTotalIn - ourTotalOut;
+  async isOwnOutputScript(
+    script: Buffer,
+    pathFromRoot?: string,
+  ): Promise<boolean> {
+    if (!pathFromRoot) return false;
+    const { publicKey } = this.rootNode.derivePath(pathFromRoot);
+    const ourScript = this.getOutputScript(publicKey);
+    return script.equals(ourScript);
   }
 }
 

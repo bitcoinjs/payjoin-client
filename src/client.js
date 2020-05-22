@@ -12,6 +12,29 @@ class PayjoinClient {
       this.payjoinRequester = new request_1.PayjoinRequester(opts.payjoinUrl);
     }
   }
+  async getSumPaidToUs(psbt) {
+    let sumPaidToUs = 0;
+    for (const input of psbt.data.inputs) {
+      const { bip32Derivation } = input;
+      const pathFromRoot = bip32Derivation && bip32Derivation[0].path;
+      if (
+        await this.wallet.isOwnOutputScript(
+          input.witnessUtxo.script,
+          pathFromRoot,
+        )
+      ) {
+        sumPaidToUs -= input.witnessUtxo.value;
+      }
+    }
+    for (const [index, output] of Object.entries(psbt.txOutputs)) {
+      const { bip32Derivation } = psbt.data.outputs[parseInt(index, 10)];
+      const pathFromRoot = bip32Derivation && bip32Derivation[0].path;
+      if (await this.wallet.isOwnOutputScript(output.script, pathFromRoot)) {
+        sumPaidToUs += output.value;
+      }
+    }
+    return sumPaidToUs;
+  }
   async run() {
     const psbt = await this.wallet.getPsbt();
     const clonedPsbt = psbt.clone();
@@ -140,8 +163,8 @@ class PayjoinClient {
           `Receiver's PSBT included inputs which were of a different format than the sent PSBT`,
         );
       }
-      const paidBack = await this.wallet.getSumPaidToUs(psbt);
-      const payjoinPaidBack = await this.wallet.getSumPaidToUs(payjoinPsbt);
+      const paidBack = await this.getSumPaidToUs(psbt);
+      const payjoinPaidBack = await this.getSumPaidToUs(payjoinPsbt);
       const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       const tx = signedPsbt.extractTransaction();
       psbt.finalizeAllInputs();
