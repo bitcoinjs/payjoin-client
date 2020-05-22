@@ -215,20 +215,14 @@ class TestWallet implements IPayjoinClientWallet {
     clearTimeout(this.timeout);
   }
 
-  async getSumPaidToUs(psbt: bitcoin.Psbt): Promise<number> {
-    let ourTotalIn = 0;
-    let ourTotalOut = 0;
-    for (let i = 0; i < psbt.inputCount; i++) {
-      if (psbt.inputHasHDKey(i, this.rootNode))
-        ourTotalOut += psbt.data.inputs[i].witnessUtxo!.value;
-    }
-
-    for (let i = 0; i < psbt.data.outputs.length; i++) {
-      if (psbt.outputHasHDKey(i, this.rootNode))
-        ourTotalIn += psbt.txOutputs[i].value;
-    }
-
-    return ourTotalIn - ourTotalOut;
+  async isOwnOutputScript(
+    script: Buffer,
+    pathFromRoot?: string,
+  ): Promise<boolean> {
+    if (!pathFromRoot) return false;
+    const { publicKey } = this.rootNode.derivePath(pathFromRoot);
+    const ourScript = this.getPayment(publicKey, this.scriptType).output!;
+    return script.equals(ourScript);
   }
 
   private getPayment(pubkey: Buffer, scriptType: ScriptType): bitcoin.Payment {
