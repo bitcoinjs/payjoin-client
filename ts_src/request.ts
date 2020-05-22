@@ -53,14 +53,18 @@ export interface IPayjoinRequester {
 }
 
 export class PayjoinRequester implements IPayjoinRequester {
-  constructor(private endpointUrl: string) {}
+  constructor(
+    private endpointUrl: string,
+    private customFetch?: () => Promise<Response>,
+  ) {}
 
   async requestPayjoin(psbt: Psbt): Promise<Psbt> {
     if (!psbt) {
       throw new Error('Need to pass psbt');
     }
 
-    const response = await fetch(this.endpointUrl, {
+    const fetchFunction = this.customFetch || fetch;
+    const response = await fetchFunction(this.endpointUrl, {
       method: 'POST',
       headers: new Headers({
         'Content-Type': 'text/plain',

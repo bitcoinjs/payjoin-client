@@ -39,14 +39,16 @@ PayjoinEndpointError.messageMap = {
   'invalid-transaction': 'The original transaction is invalid for payjoin.',
 };
 class PayjoinRequester {
-  constructor(endpointUrl) {
+  constructor(endpointUrl, customFetch) {
     this.endpointUrl = endpointUrl;
+    this.customFetch = customFetch;
   }
   async requestPayjoin(psbt) {
     if (!psbt) {
       throw new Error('Need to pass psbt');
     }
-    const response = await fetch(this.endpointUrl, {
+    const fetchFunction = this.customFetch || fetch;
+    const response = await fetchFunction(this.endpointUrl, {
       method: 'POST',
       headers: new Headers({
         'Content-Type': 'text/plain',

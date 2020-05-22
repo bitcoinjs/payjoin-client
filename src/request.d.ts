@@ -29,6 +29,7 @@ export interface IPayjoinRequester {
 }
 export declare class PayjoinRequester implements IPayjoinRequester {
     private endpointUrl;
-    constructor(endpointUrl: string);
+    private customFetch?;
+    constructor(endpointUrl: string, customFetch?: (() => Promise<Response>) | undefined);
     requestPayjoin(psbt: Psbt): Promise<Psbt>;
 }
