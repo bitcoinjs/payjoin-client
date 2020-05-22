@@ -39,9 +39,11 @@
     "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#f87a20caa7828f6f8c29049c73efd369ff81c57b"
   },
   "devDependencies": {
+    "@types/isomorphic-fetch": "0.0.35",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.13.0",
     "btcpay": "^0.2.4",
+    "isomorphic-fetch": "^2.2.1",
     "jest": "^25.3.0",
     "jest-fetch-mock": "^3.0.3",
     "prettier": "^2.0.4",
