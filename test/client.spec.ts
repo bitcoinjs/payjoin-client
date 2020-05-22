@@ -11,10 +11,11 @@ const network = bitcoin.networks.regtest;
 
 const p2shp2wpkhOutputScript = (pubkey: Buffer) =>
   bitcoin.payments.p2sh({
-    redeem: bitcoin.payments.p2wpkh({ pubkey: pubkey }),
+    redeem: bitcoin.payments.p2wpkh({ pubkey, network }),
+    network,
   }).output;
 const p2wpkhOutputScript = (pubkey: Buffer) =>
-  bitcoin.payments.p2wpkh({ pubkey }).output;
+  bitcoin.payments.p2wpkh({ pubkey, network }).output;
 
 describe('requestPayjoin', () => {
   it('should exist', () => {
