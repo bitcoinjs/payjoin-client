@@ -1,0 +1,29 @@
+{
+  "name": "payjoin-client",
+  "version": "0.0.1",
+  "description": "A Payjoin Client Library in JS with TypeScript types",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitcoinjs/payjoin-client.git"
+  },
+  "keywords": [
+    "bitcoinjs",
+    "bitcoin",
+    "payjoin",
+    "btcpayserver"
+  ],
+  "contributors": [
+    "Jonathan Underwood <junderwood@bitcoinbank.co.jp>",
+    "Andrew Camilleri (Kukks) <evilkukka@gmail.com>",
+    "Luke Childs <lukechilds123@gmail.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bitcoinjs/payjoin-client/issues"
+  },
+  "homepage": "https://github.com/bitcoinjs/payjoin-client#readme"
+}
