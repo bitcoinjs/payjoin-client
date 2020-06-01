@@ -2,13 +2,48 @@
   "name": "payjoin-client",
   "version": "0.0.1",
   "description": "A Payjoin Client Library in JS with TypeScript types",
-  "main": "index.js",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run clean && tsc -p tsconfig.json && npm run formatjs",
+    "clean": "rm -rf src",
+    "coverage": "npm run unit -- --coverage",
+    "format": "npm run prettier -- --write",
+    "formatjs": "npm run prettierjs -- --write > /dev/null 2>&1",
+    "format:ci": "npm run prettier -- --check",
+    "gitdiff": "git diff --exit-code",
+    "gitdiff:ci": "npm run build && npm run gitdiff",
+    "integration": "JEST_TYPE=integration npm run unit",
+    "lint": "tslint -p tsconfig.json -c tslint.json",
+    "prepublishOnly": "npm run test && npm run gitdiff",
+    "prettier": "prettier 'ts_src/**/*.ts' 'test/**/*.ts' 'integration/**/*.ts' --ignore-path ./.prettierignore",
+    "prettierjs": "prettier 'src/**/*.js' --ignore-path ./.prettierignore",
+    "test": "npm run build && npm run format:ci && npm run lint && npm run unit",
+    "unit": "jest --config=jest.config.js --runInBand"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bitcoinjs/payjoin-client.git"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#f87a20caa7828f6f8c29049c73efd369ff81c57b"
+  },
+  "devDependencies": {
+    "@types/isomorphic-fetch": "0.0.35",
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.13.0",
+    "btcpay": "^0.2.4",
+    "isomorphic-fetch": "^2.2.1",
+    "jest": "^25.3.0",
+    "jest-fetch-mock": "^3.0.3",
+    "prettier": "^2.0.4",
+    "regtest-client": "^0.2.0",
+    "ts-jest": "^25.3.1",
+    "tslint": "^6.1.1",
+    "typescript": "^3.8.3"
   },
   "keywords": [
     "bitcoinjs",
