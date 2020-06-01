@@ -1,5 +1,6 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
+exports.PayjoinClient = void 0;
 const request_1 = require('./request');
 const utils_1 = require('./utils');
 const BROADCAST_ATTEMPT_TIME = 1 * 60 * 1000; // 1 minute
