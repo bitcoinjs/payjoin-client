@@ -1,5 +1,5 @@
 # Payjoin Client
-[![Build Status](https://travis-ci.org/bitcoinjs/payjoin-client.png?branch=master)](https://travis-ci.org/bitcoinjs/payjoin-client)
+[![Build Status](https://travis-ci.com/bitcoinjs/payjoin-client.png?branch=master)](https://travis-ci.com/github/bitcoinjs/payjoin-client)
 
 [![NPM](https://img.shields.io/npm/v/payjoin-client.svg)](https://www.npmjs.org/package/payjoin-client)
 
