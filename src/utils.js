@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputsScriptPubKeyType = exports.checkSanity = exports.getFee = exports.SUPPORTED_WALLET_FORMATS = exports.ScriptPubKeyType = void 0;
+exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputsScriptPubKeyType = exports.checkSanity = exports.getFee = exports.ScriptPubKeyType = void 0;
 const bitcoinjs_lib_1 = require('bitcoinjs-lib');
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
@@ -27,10 +27,6 @@ var ScriptPubKeyType;
   (ScriptPubKeyType =
     exports.ScriptPubKeyType || (exports.ScriptPubKeyType = {})),
 );
-exports.SUPPORTED_WALLET_FORMATS = [
-  ScriptPubKeyType.Segwit,
-  ScriptPubKeyType.SegwitP2SH,
-];
 function getFee(feeRate, size) {
   return feeRate * size;
 }

@@ -23,11 +23,6 @@ export enum ScriptPubKeyType {
   SegwitP2SH,
 }
 
-export const SUPPORTED_WALLET_FORMATS = [
-  ScriptPubKeyType.Segwit,
-  ScriptPubKeyType.SegwitP2SH,
-];
-
 export function getFee(feeRate: number, size: number): number {
   return feeRate * size;
 }

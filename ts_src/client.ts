@@ -8,21 +8,74 @@ import {
   getFee,
   hasKeypathInformationSet,
   isFinalized,
-  SUPPORTED_WALLET_FORMATS,
 } from './utils';
 
-const BROADCAST_ATTEMPT_TIME = 1 * 60 * 1000; // 1 minute
+const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
+
+export interface PayjoinClientOptionalParameters {
+  disableOutputSubstitution?: boolean;
+  payjoinVersion?: number;
+  additionalfeeoutputindex?: number;
+  maxadditionalfeecontribution?: number;
+  minimumFeeRate?: number;
+}
 
 export class PayjoinClient {
   private wallet: IPayjoinClientWallet;
   private payjoinRequester: IPayjoinRequester;
+  private payjoinParameters?: PayjoinClientOptionalParameters;
   constructor(opts: PayjoinClientOpts) {
     this.wallet = opts.wallet;
+    this.payjoinParameters = opts.payjoinParameters;
     if (isRequesterOpts(opts)) {
       this.payjoinRequester = opts.payjoinRequester;
     } else {
-      this.payjoinRequester = new PayjoinRequester(opts.payjoinUrl);
+      this.payjoinRequester = new PayjoinRequester(
+        this.getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
+      );
     }
+  }
+
+  private getEndpointUrl(
+    url: string,
+    payjoinParameters?: PayjoinClientOptionalParameters,
+  ): string {
+    if (!payjoinParameters) {
+      return url;
+    }
+    const parsedURL = new URL(url);
+
+    if (payjoinParameters.disableOutputSubstitution !== undefined) {
+      parsedURL.searchParams.set(
+        'disableoutputsubstitution',
+        payjoinParameters.disableOutputSubstitution.toString(),
+      );
+    }
+    if (payjoinParameters.payjoinVersion !== undefined) {
+      parsedURL.searchParams.set(
+        'v',
+        payjoinParameters.payjoinVersion.toString(),
+      );
+    }
+    if (payjoinParameters.minimumFeeRate !== undefined) {
+      parsedURL.searchParams.set(
+        'minfeerate',
+        payjoinParameters.minimumFeeRate.toString(),
+      );
+    }
+    if (payjoinParameters.maxadditionalfeecontribution !== undefined) {
+      parsedURL.searchParams.set(
+        'maxadditionalfeecontribution',
+        payjoinParameters.maxadditionalfeecontribution.toString(),
+      );
+    }
+    if (payjoinParameters.additionalfeeoutputindex !== undefined) {
+      parsedURL.searchParams.set(
+        'additionalfeeoutputindex',
+        payjoinParameters.additionalfeeoutputindex.toString(),
+      );
+    }
+    return parsedURL.href;
   }
 
   private async getSumPaidToUs(psbt: Psbt): Promise<number> {
@@ -63,12 +116,6 @@ export class PayjoinClient {
       this.wallet.broadcastTx(originalTxHex);
 
     try {
-      if (SUPPORTED_WALLET_FORMATS.indexOf(originalType) === -1) {
-        throw new Error(
-          'Inputs used do not support payjoin, they must be segwit (p2wpkh or p2sh-p2wpkh)',
-        );
-      }
-
       // We make sure we don't send unnecessary information to the receiver
       for (let index = 0; index < clonedPsbt.inputCount; index++) {
         clonedPsbt.clearFinalizedInput(index);
@@ -178,6 +225,57 @@ export class PayjoinClient {
         });
       }
 
+      if (this.payjoinParameters?.disableOutputSubstitution) {
+        // Verify that all of sender's outputs from the original PSBT are in the proposal.
+        psbt.data.outputs.forEach((_originalOutput, i): void => {
+          const outputLegacy = psbt.txOutputs[i];
+          let found = false;
+          for (
+            let payjoinIndex = 0;
+            payjoinIndex < payjoinPsbt.data.outputs.length;
+            payjoinIndex++
+          ) {
+            const payjoinOutputLegacy = payjoinPsbt.txOutputs[payjoinIndex];
+
+            if (outputLegacy.script.equals(payjoinOutputLegacy.script)) {
+              found = true;
+              if (
+                this.payjoinParameters?.additionalfeeoutputindex === undefined
+              ) {
+                break;
+              }
+              if (this.payjoinParameters?.additionalfeeoutputindex === i) {
+                // validate maxadditionalfeecontribution
+                const differenceInValueOfOuputs =
+                  payjoinOutputLegacy.value - outputLegacy.value;
+                if (
+                  this.payjoinParameters?.maxadditionalfeecontribution !==
+                    undefined &&
+                  differenceInValueOfOuputs >
+                    this.payjoinParameters?.maxadditionalfeecontribution
+                ) {
+                  throw new Error(
+                    'The actual contribution is more than maxadditionalfeecontribution',
+                  );
+                }
+              } else {
+                // Make sure the output's value did not decrease if it is not the specified index where fee should be deducted from
+                if (outputLegacy.value - payjoinOutputLegacy.value > 0) {
+                  throw new Error(
+                    `Sender output #${i} value was modified when only #${this.payjoinParameters?.additionalfeeoutputindex} should have changed`,
+                  );
+                }
+              }
+            }
+          }
+          if (!found) {
+            throw new Error(
+              `Some of our outputs are not included in the proposal`,
+            );
+          }
+        });
+      }
+
       if (payjoinPsbt.version !== psbt.version) {
         throw new Error(
           'The version field of the transaction has been modified',
@@ -216,14 +314,31 @@ export class PayjoinClient {
           throw new Error(
             'The payjoin receiver is sending more money to himself',
           );
-        if (overPaying > originalFee)
+        if (
+          this.payjoinParameters?.maxadditionalfeecontribution !== undefined &&
+          overPaying > this.payjoinParameters?.maxadditionalfeecontribution
+        ) {
+          throw new Error(
+            'The actual contribution is more than maxadditionalfeecontribution',
+          );
+        } else if (overPaying > originalFee)
           throw new Error(
             'The payjoin receiver is making us pay more than twice the original fee',
           );
+
         const newVirtualSize = tx.virtualSize();
         // Let's check the difference is only for the fee and that feerate
         // did not changed that much
         const originalFeeRate = psbt.getFeeRate();
+
+        if (
+          this.payjoinParameters?.minimumFeeRate &&
+          this.payjoinParameters.minimumFeeRate > signedPsbt.getFeeRate()
+        ) {
+          throw new Error(
+            'The payjoin receiver created a payjoin with a too low fee rate',
+          );
+        }
         let expectedFee = getFee(originalFeeRate, newVirtualSize);
         // Signing precisely is hard science, give some breathing room for error.
         expectedFee += getFee(originalFeeRate, payjoinPsbt.inputCount * 2);
@@ -263,11 +378,13 @@ type PayjoinClientOpts = PayjoinClientOptsUrl | PayjoinClientOptsRequester;
 interface PayjoinClientOptsUrl {
   wallet: IPayjoinClientWallet;
   payjoinUrl: string;
+  payjoinParameters?: PayjoinClientOptionalParameters;
 }
 
 interface PayjoinClientOptsRequester {
   wallet: IPayjoinClientWallet;
   payjoinRequester: IPayjoinRequester;
+  payjoinParameters?: PayjoinClientOptionalParameters;
 }
 
 function isRequesterOpts(

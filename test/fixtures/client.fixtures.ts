@@ -23,15 +23,6 @@ export default {
   ],
   invalid: [
     {
-      description: 'should throw when input is wrong type',
-      exception:
-        'Inputs used do not support payjoin, they must be segwit \\(p2wpkh or p2sh-p2wpkh\\)',
-      vector: {
-        wallet:
-          'cHNidP8BAFUCAAAAARjxDP3puQxJ0a3RWQ95ciPPi+V2jZgZb/NuHV93KZ+wAAAAAAD/////AUQLAQAAAAAAGXapFL2ZyQMv/In1PSScRofmzbEatoddiKwAAAAAAAEAwAIAAAABf4FPD7V9reV6et8EcC8IHyUPnNdazWDZds5QNGbC95ABAAAAa0gwRQIhAPJ8LolgdP+68jLc2ijj8w5B44Ue6esWbH4gPFvVFhkUAiA3XC7eb5+x0NfDBbK0UAz7CngGv9FZ7uA9ipO9LCptnAEhA6SNzVPHrx8ylDHvD2Jv8wdRpQJZ7fGljNhKSJSBaiGX/////wEsDwEAAAAAABl2qRS9mckDL/yJ9T0knEaH5s2xGraHXYisAAAAACICAq91A34xjfh7oaDkCBF5GPpZJv0EyyHt9fflPYb3kdVtRzBEAiAQBWcXLHA1k+tm40C+IJnQ3ZgRfoCMkdLYsgvaGYiVagIgfFhmsgSKJqOS0TxGRKQvfnFIoxXaxKREDY4NKm4t0wMBAAA=',
-      },
-    },
-    {
       description: 'should throw when input is missing utxo info',
       exception:
         'The psbt should be able to be finalized with utxo information',
