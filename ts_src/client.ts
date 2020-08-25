@@ -16,7 +16,6 @@ const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
 
 export interface PayjoinClientOptionalParameters {
   disableOutputSubstitution?: boolean;
-  paymentScript?: Buffer;
   payjoinVersion?: number;
   additionalfeeoutputindex?: number;
   maxadditionalfeecontribution?: number;
@@ -27,7 +26,7 @@ export class PayjoinClient {
   private wallet: IPayjoinClientWallet;
   private payjoinRequester: IPayjoinRequester;
   private payjoinParameters?: PayjoinClientOptionalParameters;
-  constructor(opts: PayjoinClientOpts) {
+  constructor(private opts: PayjoinClientOpts) {
     this.wallet = opts.wallet;
     this.payjoinParameters = opts.payjoinParameters;
     if (isRequesterOpts(opts)) {
@@ -129,11 +128,6 @@ export class PayjoinClient {
         this.payjoinParameters?.disableOutputSubstitution !== undefined &&
         this.payjoinParameters?.disableOutputSubstitution
       );
-      if (allowOutputSubstitution && !this.payjoinParameters?.paymentScript) {
-        throw new Error(
-          'paymentScript needs to be specified when disableOutputSubstitution is true',
-        );
-      }
       const payjoinPsbt = await this.payjoinRequester.requestPayjoin(
         clonedPsbt,
       );
@@ -293,10 +287,7 @@ export class PayjoinClient {
               );
           } else if (
             allowOutputSubstitution &&
-            (!this.payjoinParameters?.paymentScript ||
-              originalOutput.originalTxOut.script.equals(
-                this.payjoinParameters?.paymentScript,
-              ))
+            originalOutput.originalTxOut.script.equals(this.opts.paymentScript)
           ) {
             // That's the payment output, the receiver may have changed it.
           } else {
@@ -314,10 +305,9 @@ export class PayjoinClient {
         if (
           !allowOutputSubstitution ||
           originalOutputs.length !== 1 ||
-          !this.payjoinParameters?.paymentScript ||
           !originalOutputs
             .splice(0, 1)[0]
-            .originalTxOut.script.equals(this.payjoinParameters?.paymentScript)
+            .originalTxOut.script.equals(this.opts.paymentScript)
         ) {
           throw new Error(
             'Some of our outputs are not included in the proposal',
@@ -374,12 +364,14 @@ type PayjoinClientOpts = PayjoinClientOptsUrl | PayjoinClientOptsRequester;
 interface PayjoinClientOptsUrl {
   wallet: IPayjoinClientWallet;
   payjoinUrl: string;
+  paymentScript: Buffer;
   payjoinParameters?: PayjoinClientOptionalParameters;
 }
 
 interface PayjoinClientOptsRequester {
   wallet: IPayjoinClientWallet;
   payjoinRequester: IPayjoinRequester;
+  paymentScript: Buffer;
   payjoinParameters?: PayjoinClientOptionalParameters;
 }
 
