@@ -1,5 +1,5 @@
-import {payments, Psbt, PsbtTxInput, Transaction} from 'bitcoinjs-lib';
-import {Bip32Derivation, PsbtInput} from 'bip174/src/lib/interfaces';
+import { payments, Psbt, PsbtTxInput, Transaction } from 'bitcoinjs-lib';
+import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
 
 export enum ScriptPubKeyType {
   /// <summary>
@@ -133,7 +133,7 @@ export function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
   const types = new Set();
 
   for (let i = 0; i < psbt.data.inputs.length; i++) {
-    types.add(getInputScriptPubKeyType(psbt,i));
+    types.add(getInputScriptPubKeyType(psbt, i));
   }
 
   if (types.size > 1) throw new Error('Inputs must all be the same type');
@@ -141,7 +141,10 @@ export function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
   return types.values().next().value;
 }
 
-export function getInputScriptPubKeyType(psbt:Psbt, i:number):ScriptPubKeyType{
+export function getInputScriptPubKeyType(
+  psbt: Psbt,
+  i: number,
+): ScriptPubKeyType {
   const type = psbt.getInputType(i);
   switch (type) {
     case 'witnesspubkeyhash':
@@ -163,10 +166,10 @@ function witnessScriptToScriptPubkey(witnessScript: Buffer): Buffer {
   return payments.p2wsh({ redeem: { output: witnessScript } }).output!;
 }
 
-export function hasKeypathInformationSet(
-  item: { bip32Derivation?: Bip32Derivation[] },
-): boolean {
-  return !!item.bip32Derivation && item.bip32Derivation.length > 0
+export function hasKeypathInformationSet(item: {
+  bip32Derivation?: Bip32Derivation[];
+}): boolean {
+  return !!item.bip32Derivation && item.bip32Derivation.length > 0;
 }
 
 export function isFinalized(input: PsbtInput): boolean {

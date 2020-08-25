@@ -5,7 +5,9 @@ import {
   getInputsScriptPubKeyType,
   getFee,
   hasKeypathInformationSet,
-  isFinalized, getInputScriptPubKeyType, getVirtualSize,
+  isFinalized,
+  getInputScriptPubKeyType,
+  getVirtualSize,
 } from './utils';
 
 const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
@@ -96,19 +98,36 @@ export class PayjoinClient {
         delete output.bip32Derivation;
       });
       delete clonedPsbt.data.globalMap.globalXpub;
-      const originalInputs =  clonedPsbt.txInputs.map((value, index) => {
-        return  {originalTxIn: value, signedPSBTInput: clonedPsbt.data.inputs[index]};
+      const originalInputs = clonedPsbt.txInputs.map((value, index) => {
+        return {
+          originalTxIn: value,
+          signedPSBTInput: clonedPsbt.data.inputs[index],
+        };
       });
-      const originalOutputs =  clonedPsbt.txOutputs.map((value, index) => {
-        return  {originalTxOut: value, signedPSBTInput: clonedPsbt.data.outputs[index]};
+      const originalOutputs = clonedPsbt.txOutputs.map((value, index) => {
+        return {
+          originalTxOut: value,
+          signedPSBTInput: clonedPsbt.data.outputs[index],
+        };
       });
-      const feeOutput = this.payjoinParameters?.additionalfeeoutputindex !== undefined? clonedPsbt.txOutputs[this.payjoinParameters?.additionalfeeoutputindex]: null;
+      const feeOutput =
+        this.payjoinParameters?.additionalfeeoutputindex !== undefined
+          ? clonedPsbt.txOutputs[
+              this.payjoinParameters?.additionalfeeoutputindex
+            ]
+          : null;
       const originalFeeRate = clonedPsbt.getFeeRate();
-      const allowOutputSubstitution = !(this.payjoinParameters?.disableOutputSubstitution !== undefined && this.payjoinParameters?.disableOutputSubstitution);
-      if(allowOutputSubstitution && !this.payjoinParameters?.paymentScript){
-        throw new Error("paymentScript needs to be specified when disableOutputSubstitution is true");
+      const allowOutputSubstitution = !(
+        this.payjoinParameters?.disableOutputSubstitution !== undefined &&
+        this.payjoinParameters?.disableOutputSubstitution
+      );
+      if (allowOutputSubstitution && !this.payjoinParameters?.paymentScript) {
+        throw new Error(
+          'paymentScript needs to be specified when disableOutputSubstitution is true',
+        );
       }
-      if(this.payjoinParameters?.additionalfeeoutputindex !== undefined){}
+      if (this.payjoinParameters?.additionalfeeoutputindex !== undefined) {
+      }
       const payjoinPsbt = await this.payjoinRequester.requestPayjoin(
         clonedPsbt,
       );
@@ -123,166 +142,202 @@ export class PayjoinClient {
         );
       }
 
-      if(payjoinPsbt.version !== clonedPsbt.version){
-        throw new Error(
-            "The proposal PSBT changed the transaction version",
-        );
+      if (payjoinPsbt.version !== clonedPsbt.version) {
+        throw new Error('The proposal PSBT changed the transaction version');
       }
 
-      if(payjoinPsbt.locktime !== clonedPsbt.locktime){
-        throw new Error(
-            "The proposal PSBT changed the nLocktime",
-        );
+      if (payjoinPsbt.locktime !== clonedPsbt.locktime) {
+        throw new Error('The proposal PSBT changed the nLocktime');
       }
-      
-      const sequences : Set<number> = new Set<number>();
+
+      const sequences: Set<number> = new Set<number>();
 
       // For each inputs in the proposal:
-      for (let i = 0; i < payjoinPsbt.data.inputs.length; i++){
+      for (let i = 0; i < payjoinPsbt.data.inputs.length; i++) {
         let proposedPSBTInput = payjoinPsbt.data.inputs[i];
         if (hasKeypathInformationSet(proposedPSBTInput))
-          throw new Error("The receiver added keypaths to an input");
-        if (proposedPSBTInput.partialSig && proposedPSBTInput.partialSig.length >0)
-          throw new Error("The receiver added partial signatures to an input");
-        
-        
-        
+          throw new Error('The receiver added keypaths to an input');
+        if (
+          proposedPSBTInput.partialSig &&
+          proposedPSBTInput.partialSig.length > 0
+        )
+          throw new Error('The receiver added partial signatures to an input');
+
         var proposedTxIn = payjoinPsbt.txInputs[i];
-        const ourInputIndex = getInputIndex(clonedPsbt, proposedTxIn.hash, proposedTxIn.index);
+        const ourInputIndex = getInputIndex(
+          clonedPsbt,
+          proposedTxIn.hash,
+          proposedTxIn.index,
+        );
         const isOurInput = ourInputIndex >= 0;
         // If it is one of our input
-        if (isOurInput)
-        {
-          const input = originalInputs.splice(0,1)[0];
+        if (isOurInput) {
+          const input = originalInputs.splice(0, 1)[0];
           // Verify that sequence is unchanged.
           if (input.originalTxIn.sequence != proposedTxIn.sequence)
-            throw new Error("The proposedTxIn modified the sequence of one of our inputs");
+            throw new Error(
+              'The proposedTxIn modified the sequence of one of our inputs',
+            );
           // Verify the PSBT input is not finalized
           if (isFinalized(proposedPSBTInput))
-            throw new Error("The receiver finalized one of our inputs");
+            throw new Error('The receiver finalized one of our inputs');
           // Verify that <code>non_witness_utxo</code> and <code>witness_utxo</code> are not specified.
           if (proposedPSBTInput.nonWitnessUtxo || proposedPSBTInput.witnessUtxo)
-            throw new Error("The receiver added non_witness_utxo or witness_utxo to one of our inputs");
+            throw new Error(
+              'The receiver added non_witness_utxo or witness_utxo to one of our inputs',
+            );
           if (proposedTxIn.sequence != null) {
             sequences.add(proposedTxIn.sequence);
           }
 
           // Fill up the info from the original PSBT input so we can sign and get fees.
-          proposedPSBTInput.nonWitnessUtxo = input.signedPSBTInput.nonWitnessUtxo;
+          proposedPSBTInput.nonWitnessUtxo =
+            input.signedPSBTInput.nonWitnessUtxo;
           proposedPSBTInput.witnessUtxo = input.signedPSBTInput.witnessUtxo;
           // We fill up information we had on the signed PSBT, so we can sign it.
 
           payjoinPsbt.updateInput(i, input.signedPSBTInput);
-        }
-        else
-        {
+        } else {
           // Verify the PSBT input is finalized
           if (!isFinalized(proposedPSBTInput))
-            throw new Error("The receiver did not finalized one of their input");
+            throw new Error(
+              'The receiver did not finalized one of their input',
+            );
           // Verify that non_witness_utxo or witness_utxo are filled in.
-          if (!proposedPSBTInput.nonWitnessUtxo && !proposedPSBTInput.witnessUtxo)
-            throw new Error("The receiver did not specify non_witness_utxo or witness_utxo for one of their inputs");
+          if (
+            !proposedPSBTInput.nonWitnessUtxo &&
+            !proposedPSBTInput.witnessUtxo
+          )
+            throw new Error(
+              'The receiver did not specify non_witness_utxo or witness_utxo for one of their inputs',
+            );
           if (proposedTxIn.sequence != null) {
             sequences.add(proposedTxIn.sequence);
           }
           // Verify that the payjoin proposal did not introduced mixed input's type.
           if (originalType != getInputScriptPubKeyType(payjoinPsbt, i))
-            throw new Error("Mixed input type detected in the proposal");
+            throw new Error('Mixed input type detected in the proposal');
         }
       }
 
       // Verify that all of sender's inputs from the original PSBT are in the proposal.
       if (originalInputs.length != 0)
-        throw new Error("Some of our inputs are not included in the proposal");
+        throw new Error('Some of our inputs are not included in the proposal');
 
       // Verify that the payjoin proposal did not introduced mixed input's sequence.
       if (sequences.size != 1)
-        throw new Error("Mixed sequence detected in the proposal");
+        throw new Error('Mixed sequence detected in the proposal');
 
       const originalFee = psbt.getFee();
-      let newFee :number;
+      let newFee: number;
       try {
-
         newFee = payjoinPsbt.getFee();
-      }
-      catch{
-
-        throw new Error("The payjoin receiver did not included UTXO information to calculate fee correctly");
+      } catch {
+        throw new Error(
+          'The payjoin receiver did not included UTXO information to calculate fee correctly',
+        );
       }
       var additionalFee = newFee - originalFee;
       if (additionalFee < 0)
-        throw new Error("The receiver decreased absolute fee");
+        throw new Error('The receiver decreased absolute fee');
 
       // For each outputs in the proposal:
-      for (let i = 0; i < payjoinPsbt.data.outputs.length; i++){
+      for (let i = 0; i < payjoinPsbt.data.outputs.length; i++) {
         const proposedPSBTOutput = payjoinPsbt.data.outputs[i];
         const proposedTxOut = payjoinPsbt.txOutputs[i];
-        
+
         // Verify that no keypaths is in the PSBT output
-                
-        if ( hasKeypathInformationSet(proposedPSBTOutput))
-          throw new Error("The receiver added keypaths to an output");
-        
-        const isOriginalOutput = originalOutputs.length > 0 && originalOutputs[0].originalTxOut.script.equals(payjoinPsbt.txOutputs[i].script);
-        if (isOriginalOutput)
-        {
-          var originalOutput = originalOutputs.splice(0,1)[0];
-          if (originalOutput.originalTxOut == feeOutput && this.payjoinParameters?.maxadditionalfeecontribution)
-          {
+
+        if (hasKeypathInformationSet(proposedPSBTOutput))
+          throw new Error('The receiver added keypaths to an output');
+
+        const isOriginalOutput =
+          originalOutputs.length > 0 &&
+          originalOutputs[0].originalTxOut.script.equals(
+            payjoinPsbt.txOutputs[i].script,
+          );
+        if (isOriginalOutput) {
+          var originalOutput = originalOutputs.splice(0, 1)[0];
+          if (
+            originalOutput.originalTxOut == feeOutput &&
+            this.payjoinParameters?.maxadditionalfeecontribution
+          ) {
             var actualContribution = feeOutput.value - proposedTxOut.value;
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
-            if (actualContribution > this.payjoinParameters?.maxadditionalfeecontribution)
-              throw new Error("The actual contribution is more than maxadditionalfeecontribution");
+            if (
+              actualContribution >
+              this.payjoinParameters?.maxadditionalfeecontribution
+            )
+              throw new Error(
+                'The actual contribution is more than maxadditionalfeecontribution',
+              );
             // Make sure the actual contribution is only paying fee
             if (actualContribution > additionalFee)
-              throw new Error("The actual contribution is not only paying fee");
+              throw new Error('The actual contribution is not only paying fee');
             // Make sure the actual contribution is only paying for fee incurred by additional inputs
-            var additionalInputsCount = payjoinPsbt.txInputs.length - clonedPsbt.txInputs.length;
-            if (actualContribution > getFee(originalFeeRate, getVirtualSize(originalType)) * additionalInputsCount)
-              throw new Error("The actual contribution is not only paying for additional inputs");
-          }
-          else if (allowOutputSubstitution && (!this.payjoinParameters?.paymentScript || originalOutput.originalTxOut.script.equals(this.payjoinParameters?.paymentScript)) )
-          {
+            var additionalInputsCount =
+              payjoinPsbt.txInputs.length - clonedPsbt.txInputs.length;
+            if (
+              actualContribution >
+              getFee(originalFeeRate, getVirtualSize(originalType)) *
+                additionalInputsCount
+            )
+              throw new Error(
+                'The actual contribution is not only paying for additional inputs',
+              );
+          } else if (
+            allowOutputSubstitution &&
+            (!this.payjoinParameters?.paymentScript ||
+              originalOutput.originalTxOut.script.equals(
+                this.payjoinParameters?.paymentScript,
+              ))
+          ) {
             // That's the payment output, the receiver may have changed it.
-          }
-          else
-          {
+          } else {
             if (originalOutput.originalTxOut.value > proposedTxOut.value)
-              throw new Error("The receiver decreased the value of one of the outputs");
+              throw new Error(
+                'The receiver decreased the value of one of the outputs',
+              );
           }
           // We fill up information we had on the signed PSBT, so we can sign it.
-          payjoinPsbt.updateOutput(i, proposedPSBTOutput );
+          payjoinPsbt.updateOutput(i, proposedPSBTOutput);
         }
       }
       // Verify that all of sender's outputs from the original PSBT are in the proposal.
-      if (originalOutputs.length != 0)
-      {
-        if (!allowOutputSubstitution ||
-            originalOutputs.length != 1 ||
-            (!this.payjoinParameters?.paymentScript  || !originalOutputs.splice(0,1)[0].originalTxOut.script.equals(this.payjoinParameters?.paymentScript)))
-        {
-          throw new Error("Some of our outputs are not included in the proposal");
+      if (originalOutputs.length != 0) {
+        if (
+          !allowOutputSubstitution ||
+          originalOutputs.length != 1 ||
+          !this.payjoinParameters?.paymentScript ||
+          !originalOutputs
+            .splice(0, 1)[0]
+            .originalTxOut.script.equals(this.payjoinParameters?.paymentScript)
+        ) {
+          throw new Error(
+            'Some of our outputs are not included in the proposal',
+          );
         }
       }
 
       // If minfeerate was specified, check that the fee rate of the payjoin transaction is not less than this value.
-      if (this.payjoinParameters?.minimumFeeRate)
-      {
+      if (this.payjoinParameters?.minimumFeeRate) {
         let newFeeRate: number;
         try {
-           newFeeRate = payjoinPsbt.getFeeRate();
-        }
-        catch {
-
-          throw new Error("The payjoin receiver did not included UTXO information to calculate fee correctly");
+          newFeeRate = payjoinPsbt.getFeeRate();
+        } catch {
+          throw new Error(
+            'The payjoin receiver did not included UTXO information to calculate fee correctly',
+          );
         }
         if (newFeeRate < this.payjoinParameters?.minimumFeeRate)
-          throw new Error("The payjoin receiver created a payjoin with a too low fee rate");
+          throw new Error(
+            'The payjoin receiver created a payjoin with a too low fee rate',
+          );
       }
 
       const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       const tx = signedPsbt.extractTransaction();
-      
+
       // Now broadcast. If this fails, there's a possibility the server is
       // trying to leak information by double spending an input, this is why
       // we schedule broadcast of original BEFORE we broadcast the payjoin.
