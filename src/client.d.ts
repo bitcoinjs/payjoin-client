@@ -1,7 +1,9 @@
+/// <reference types="node" />
 import { IPayjoinRequester } from './request';
 import { IPayjoinClientWallet } from './wallet';
 export interface PayjoinClientOptionalParameters {
     disableOutputSubstitution?: boolean;
+    paymentScript?: Buffer;
     payjoinVersion?: number;
     additionalfeeoutputindex?: number;
     maxadditionalfeecontribution?: number;
@@ -13,7 +15,6 @@ export declare class PayjoinClient {
     private payjoinParameters?;
     constructor(opts: PayjoinClientOpts);
     private getEndpointUrl;
-    private getSumPaidToUs;
     run(): Promise<void>;
 }
 declare type PayjoinClientOpts = PayjoinClientOptsUrl | PayjoinClientOptsRequester;

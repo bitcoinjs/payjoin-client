@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputsScriptPubKeyType = exports.checkSanity = exports.getFee = exports.ScriptPubKeyType = void 0;
+exports.getVirtualSize = exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputScriptPubKeyType = exports.getInputsScriptPubKeyType = exports.checkSanity = exports.getFee = exports.ScriptPubKeyType = void 0;
 const bitcoinjs_lib_1 = require('bitcoinjs-lib');
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
@@ -128,25 +128,26 @@ function getInputsScriptPubKeyType(psbt) {
     );
   const types = new Set();
   for (let i = 0; i < psbt.data.inputs.length; i++) {
-    const type = psbt.getInputType(i);
-    switch (type) {
-      case 'witnesspubkeyhash':
-        types.add(ScriptPubKeyType.Segwit);
-        break;
-      case 'p2sh-witnesspubkeyhash':
-        types.add(ScriptPubKeyType.SegwitP2SH);
-        break;
-      case 'pubkeyhash':
-        types.add(ScriptPubKeyType.Legacy);
-        break;
-      default:
-        types.add(ScriptPubKeyType.Unsupported);
-    }
+    types.add(getInputScriptPubKeyType(psbt, i));
   }
   if (types.size > 1) throw new Error('Inputs must all be the same type');
   return types.values().next().value;
 }
 exports.getInputsScriptPubKeyType = getInputsScriptPubKeyType;
+function getInputScriptPubKeyType(psbt, i) {
+  const type = psbt.getInputType(i);
+  switch (type) {
+    case 'witnesspubkeyhash':
+      return ScriptPubKeyType.Segwit;
+    case 'p2sh-witnesspubkeyhash':
+      return ScriptPubKeyType.SegwitP2SH;
+    case 'pubkeyhash':
+      return ScriptPubKeyType.Legacy;
+    default:
+      return ScriptPubKeyType.Unsupported;
+  }
+}
+exports.getInputScriptPubKeyType = getInputScriptPubKeyType;
 function redeemScriptToScriptPubkey(redeemScript) {
   return bitcoinjs_lib_1.payments.p2sh({ redeem: { output: redeemScript } })
     .output;
@@ -155,12 +156,8 @@ function witnessScriptToScriptPubkey(witnessScript) {
   return bitcoinjs_lib_1.payments.p2wsh({ redeem: { output: witnessScript } })
     .output;
 }
-function hasKeypathInformationSet(items) {
-  return (
-    items.filter(
-      (value) => !!value.bip32Derivation && value.bip32Derivation.length > 0,
-    ).length > 0
-  );
+function hasKeypathInformationSet(item) {
+  return !!item.bip32Derivation && item.bip32Derivation.length > 0;
 }
 exports.hasKeypathInformationSet = hasKeypathInformationSet;
 function isFinalized(input) {
@@ -181,3 +178,16 @@ function getInputIndex(psbt, prevOutHash, prevOutIndex) {
   return -1;
 }
 exports.getInputIndex = getInputIndex;
+function getVirtualSize(scriptPubKeyType) {
+  switch (scriptPubKeyType) {
+    case ScriptPubKeyType.Legacy:
+      return 148;
+    case ScriptPubKeyType.Segwit:
+      return 68;
+    case ScriptPubKeyType.SegwitP2SH:
+      return 91;
+    default:
+      return 110;
+  }
+}
+exports.getVirtualSize = getVirtualSize;

@@ -1,5 +1,5 @@
-import { payments, Psbt, Transaction, PsbtTxInput } from 'bitcoinjs-lib';
-import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
+import {payments, Psbt, PsbtTxInput, Transaction} from 'bitcoinjs-lib';
+import {Bip32Derivation, PsbtInput} from 'bip174/src/lib/interfaces';
 
 export enum ScriptPubKeyType {
   /// <summary>
@@ -133,25 +133,26 @@ export function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
   const types = new Set();
 
   for (let i = 0; i < psbt.data.inputs.length; i++) {
-    const type = psbt.getInputType(i);
-    switch (type) {
-      case 'witnesspubkeyhash':
-        types.add(ScriptPubKeyType.Segwit);
-        break;
-      case 'p2sh-witnesspubkeyhash':
-        types.add(ScriptPubKeyType.SegwitP2SH);
-        break;
-      case 'pubkeyhash':
-        types.add(ScriptPubKeyType.Legacy);
-        break;
-      default:
-        types.add(ScriptPubKeyType.Unsupported);
-    }
+    types.add(getInputScriptPubKeyType(psbt,i));
   }
 
   if (types.size > 1) throw new Error('Inputs must all be the same type');
 
   return types.values().next().value;
+}
+
+export function getInputScriptPubKeyType(psbt:Psbt, i:number):ScriptPubKeyType{
+  const type = psbt.getInputType(i);
+  switch (type) {
+    case 'witnesspubkeyhash':
+      return ScriptPubKeyType.Segwit;
+    case 'p2sh-witnesspubkeyhash':
+      return ScriptPubKeyType.SegwitP2SH;
+    case 'pubkeyhash':
+      return ScriptPubKeyType.Legacy;
+    default:
+      return ScriptPubKeyType.Unsupported;
+  }
 }
 
 function redeemScriptToScriptPubkey(redeemScript: Buffer): Buffer {
@@ -163,14 +164,9 @@ function witnessScriptToScriptPubkey(witnessScript: Buffer): Buffer {
 }
 
 export function hasKeypathInformationSet(
-  items: { bip32Derivation?: Bip32Derivation[] }[],
+  item: { bip32Derivation?: Bip32Derivation[] },
 ): boolean {
-  return (
-    items.filter(
-      (value): boolean =>
-        !!value.bip32Derivation && value.bip32Derivation.length > 0,
-    ).length > 0
-  );
+  return !!item.bip32Derivation && item.bip32Derivation.length > 0
 }
 
 export function isFinalized(input: PsbtInput): boolean {
@@ -194,4 +190,17 @@ export function getInputIndex(
   }
 
   return -1;
+}
+
+export function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType) {
+  switch (scriptPubKeyType) {
+    case ScriptPubKeyType.Legacy:
+      return 148;
+    case ScriptPubKeyType.Segwit:
+      return 68;
+    case ScriptPubKeyType.SegwitP2SH:
+      return 91;
+    default:
+      return 110;
+  }
 }
