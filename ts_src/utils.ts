@@ -195,7 +195,7 @@ export function getInputIndex(
   return -1;
 }
 
-export function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType) {
+export function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number {
   switch (scriptPubKeyType) {
     case ScriptPubKeyType.Legacy:
       return 148;

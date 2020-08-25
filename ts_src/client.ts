@@ -1,14 +1,16 @@
 import { IPayjoinRequester, PayjoinRequester } from './request';
 import { IPayjoinClientWallet } from './wallet';
 import {
-  getInputIndex,
-  getInputsScriptPubKeyType,
   getFee,
+  getInputIndex,
+  getInputScriptPubKeyType,
+  getInputsScriptPubKeyType,
+  getVirtualSize,
   hasKeypathInformationSet,
   isFinalized,
-  getInputScriptPubKeyType,
-  getVirtualSize,
 } from './utils';
+import { PsbtTxInput, PsbtTxOutput } from 'bitcoinjs-lib';
+import { PsbtInput, PsbtOutput } from 'bip174/src/lib/interfaces';
 
 const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
 
@@ -98,13 +100,19 @@ export class PayjoinClient {
         delete output.bip32Derivation;
       });
       delete clonedPsbt.data.globalMap.globalXpub;
-      const originalInputs = clonedPsbt.txInputs.map((value, index) => {
+      const originalInputs = clonedPsbt.txInputs.map((value, index): {
+        originalTxIn: PsbtTxInput;
+        signedPSBTInput: PsbtInput;
+      } => {
         return {
           originalTxIn: value,
           signedPSBTInput: clonedPsbt.data.inputs[index],
         };
       });
-      const originalOutputs = clonedPsbt.txOutputs.map((value, index) => {
+      const originalOutputs = clonedPsbt.txOutputs.map((value, index): {
+        originalTxOut: PsbtTxOutput;
+        signedPSBTInput: PsbtOutput;
+      } => {
         return {
           originalTxOut: value,
           signedPSBTInput: clonedPsbt.data.outputs[index],
@@ -125,8 +133,6 @@ export class PayjoinClient {
         throw new Error(
           'paymentScript needs to be specified when disableOutputSubstitution is true',
         );
-      }
-      if (this.payjoinParameters?.additionalfeeoutputindex !== undefined) {
       }
       const payjoinPsbt = await this.payjoinRequester.requestPayjoin(
         clonedPsbt,
@@ -154,7 +160,7 @@ export class PayjoinClient {
 
       // For each inputs in the proposal:
       for (let i = 0; i < payjoinPsbt.data.inputs.length; i++) {
-        let proposedPSBTInput = payjoinPsbt.data.inputs[i];
+        const proposedPSBTInput = payjoinPsbt.data.inputs[i];
         if (hasKeypathInformationSet(proposedPSBTInput))
           throw new Error('The receiver added keypaths to an input');
         if (
@@ -163,7 +169,7 @@ export class PayjoinClient {
         )
           throw new Error('The receiver added partial signatures to an input');
 
-        var proposedTxIn = payjoinPsbt.txInputs[i];
+        const proposedTxIn = payjoinPsbt.txInputs[i];
         const ourInputIndex = getInputIndex(
           clonedPsbt,
           proposedTxIn.hash,
@@ -174,7 +180,7 @@ export class PayjoinClient {
         if (isOurInput) {
           const input = originalInputs.splice(0, 1)[0];
           // Verify that sequence is unchanged.
-          if (input.originalTxIn.sequence != proposedTxIn.sequence)
+          if (input.originalTxIn.sequence !== proposedTxIn.sequence)
             throw new Error(
               'The proposedTxIn modified the sequence of one of our inputs',
             );
@@ -215,17 +221,17 @@ export class PayjoinClient {
             sequences.add(proposedTxIn.sequence);
           }
           // Verify that the payjoin proposal did not introduced mixed input's type.
-          if (originalType != getInputScriptPubKeyType(payjoinPsbt, i))
+          if (originalType !== getInputScriptPubKeyType(payjoinPsbt, i))
             throw new Error('Mixed input type detected in the proposal');
         }
       }
 
       // Verify that all of sender's inputs from the original PSBT are in the proposal.
-      if (originalInputs.length != 0)
+      if (originalInputs.length !== 0)
         throw new Error('Some of our inputs are not included in the proposal');
 
       // Verify that the payjoin proposal did not introduced mixed input's sequence.
-      if (sequences.size != 1)
+      if (sequences.size !== 1)
         throw new Error('Mixed sequence detected in the proposal');
 
       const originalFee = psbt.getFee();
@@ -237,7 +243,7 @@ export class PayjoinClient {
           'The payjoin receiver did not included UTXO information to calculate fee correctly',
         );
       }
-      var additionalFee = newFee - originalFee;
+      const additionalFee = newFee - originalFee;
       if (additionalFee < 0)
         throw new Error('The receiver decreased absolute fee');
 
@@ -257,12 +263,12 @@ export class PayjoinClient {
             payjoinPsbt.txOutputs[i].script,
           );
         if (isOriginalOutput) {
-          var originalOutput = originalOutputs.splice(0, 1)[0];
+          const originalOutput = originalOutputs.splice(0, 1)[0];
           if (
-            originalOutput.originalTxOut == feeOutput &&
+            originalOutput.originalTxOut === feeOutput &&
             this.payjoinParameters?.maxadditionalfeecontribution
           ) {
-            var actualContribution = feeOutput.value - proposedTxOut.value;
+            const actualContribution = feeOutput.value - proposedTxOut.value;
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
             if (
               actualContribution >
@@ -275,7 +281,7 @@ export class PayjoinClient {
             if (actualContribution > additionalFee)
               throw new Error('The actual contribution is not only paying fee');
             // Make sure the actual contribution is only paying for fee incurred by additional inputs
-            var additionalInputsCount =
+            const additionalInputsCount =
               payjoinPsbt.txInputs.length - clonedPsbt.txInputs.length;
             if (
               actualContribution >
@@ -304,10 +310,10 @@ export class PayjoinClient {
         }
       }
       // Verify that all of sender's outputs from the original PSBT are in the proposal.
-      if (originalOutputs.length != 0) {
+      if (originalOutputs.length !== 0) {
         if (
           !allowOutputSubstitution ||
-          originalOutputs.length != 1 ||
+          originalOutputs.length !== 1 ||
           !this.payjoinParameters?.paymentScript ||
           !originalOutputs
             .splice(0, 1)[0]
