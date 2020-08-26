@@ -16,4 +16,4 @@ export declare function hasKeypathInformationSet(item: {
 }): boolean;
 export declare function isFinalized(input: PsbtInput): boolean;
 export declare function getInputIndex(psbt: Psbt, prevOutHash: Buffer, prevOutIndex: number): number;
-export declare function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): 148 | 68 | 91 | 110;
+export declare function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number;

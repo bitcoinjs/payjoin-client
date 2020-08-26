@@ -52,7 +52,7 @@ export default {
     {
       description: 'should throw when payjoin has bip32Derivation',
       exception:
-        "Keypath information should not be included in the receiver's PSBT",
+        "The receiver added keypaths to an input",
       vector: {
         wallet:
           'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',

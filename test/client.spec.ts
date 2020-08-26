@@ -44,11 +44,12 @@ async function testPayjoin(
   getOutputScript: Function,
 ): Promise<void> {
   const rootNode = bitcoin.bip32.fromBase58(VECTORS.privateRoot, network);
-  const wallet = new TestWallet(vector.wallet, rootNode, getOutputScript);
+  const wallet = new TestWallet(vector.wallet, rootNode);
   const payjoinRequester = new DummyRequester(vector.payjoin);
   const client = new PayjoinClient({
     wallet,
     payjoinRequester,
+    paymentScript: getOutputScript(),
   });
 
   await client.run();
@@ -65,7 +66,6 @@ class TestWallet implements IPayjoinClientWallet {
   constructor(
     private psbtString: string,
     private rootNode: bitcoin.BIP32Interface,
-    private getOutputScript: Function,
   ) {}
 
   async getPsbt() {
@@ -91,16 +91,6 @@ class TestWallet implements IPayjoinClientWallet {
 
   async scheduleBroadcastTx(txHex: string, ms: number): Promise<void> {
     return txHex + ms + 'x' ? undefined : undefined;
-  }
-
-  async isOwnOutputScript(
-    script: Buffer,
-    pathFromRoot?: string,
-  ): Promise<boolean> {
-    if (!pathFromRoot) return false;
-    const { publicKey } = this.rootNode.derivePath(pathFromRoot);
-    const ourScript = this.getOutputScript(publicKey);
-    return script.equals(ourScript);
   }
 }
 

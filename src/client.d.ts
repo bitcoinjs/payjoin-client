@@ -3,7 +3,6 @@ import { IPayjoinRequester } from './request';
 import { IPayjoinClientWallet } from './wallet';
 export interface PayjoinClientOptionalParameters {
     disableOutputSubstitution?: boolean;
-    paymentScript?: Buffer;
     payjoinVersion?: number;
     additionalfeeoutputindex?: number;
     maxadditionalfeecontribution?: number;
@@ -11,6 +10,7 @@ export interface PayjoinClientOptionalParameters {
 }
 export declare class PayjoinClient {
     private wallet;
+    private paymentScript;
     private payjoinRequester;
     private payjoinParameters?;
     constructor(opts: PayjoinClientOpts);
@@ -21,11 +21,13 @@ declare type PayjoinClientOpts = PayjoinClientOptsUrl | PayjoinClientOptsRequest
 interface PayjoinClientOptsUrl {
     wallet: IPayjoinClientWallet;
     payjoinUrl: string;
+    paymentScript: Buffer;
     payjoinParameters?: PayjoinClientOptionalParameters;
 }
 interface PayjoinClientOptsRequester {
     wallet: IPayjoinClientWallet;
     payjoinRequester: IPayjoinRequester;
+    paymentScript: Buffer;
     payjoinParameters?: PayjoinClientOptionalParameters;
 }
 export {};

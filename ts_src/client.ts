@@ -24,10 +24,12 @@ export interface PayjoinClientOptionalParameters {
 
 export class PayjoinClient {
   private wallet: IPayjoinClientWallet;
+  private paymentScript: Buffer;
   private payjoinRequester: IPayjoinRequester;
   private payjoinParameters?: PayjoinClientOptionalParameters;
-  constructor(private opts: PayjoinClientOpts) {
+  constructor(opts: PayjoinClientOpts) {
     this.wallet = opts.wallet;
+    this.paymentScript = opts.paymentScript;
     this.payjoinParameters = opts.payjoinParameters;
     if (isRequesterOpts(opts)) {
       this.payjoinRequester = opts.payjoinRequester;
@@ -287,7 +289,7 @@ export class PayjoinClient {
               );
           } else if (
             allowOutputSubstitution &&
-            originalOutput.originalTxOut.script.equals(this.opts.paymentScript)
+            originalOutput.originalTxOut.script.equals(this.paymentScript)
           ) {
             // That's the payment output, the receiver may have changed it.
           } else {
@@ -307,7 +309,7 @@ export class PayjoinClient {
           originalOutputs.length !== 1 ||
           !originalOutputs
             .splice(0, 1)[0]
-            .originalTxOut.script.equals(this.opts.paymentScript)
+            .originalTxOut.script.equals(this.paymentScript)
         ) {
           throw new Error(
             'Some of our outputs are not included in the proposal',

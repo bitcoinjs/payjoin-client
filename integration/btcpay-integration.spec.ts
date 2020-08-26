@@ -62,7 +62,10 @@ async function testPayjoin(
   });
   const pjEndpoint = qs.decode(invoice.paymentUrls.BIP21 as string)
     .pj as string;
-
+  const paymentScript = bitcoin.address.toOutputScript(
+    invoice.bitcoinAddress,
+    network,
+  );
   const wallet = new TestWallet(
     invoice.bitcoinAddress,
     Math.round(parseFloat(invoice.btcPrice) * 1e8),
@@ -71,6 +74,7 @@ async function testPayjoin(
   );
   const client = new PayjoinClient({
     wallet,
+    paymentScript: paymentScript,
     payjoinUrl: pjEndpoint,
   });
 
@@ -213,16 +217,6 @@ class TestWallet implements IPayjoinClientWallet {
     // But since this is a test, and we don't want the test to wait 2 minutes
     // we will cancel it immediately after
     clearTimeout(this.timeout);
-  }
-
-  async isOwnOutputScript(
-    script: Buffer,
-    pathFromRoot?: string,
-  ): Promise<boolean> {
-    if (!pathFromRoot) return false;
-    const { publicKey } = this.rootNode.derivePath(pathFromRoot);
-    const ourScript = this.getPayment(publicKey, this.scriptType).output!;
-    return script.equals(ourScript);
   }
 
   private getPayment(pubkey: Buffer, scriptType: ScriptType): bitcoin.Payment {
