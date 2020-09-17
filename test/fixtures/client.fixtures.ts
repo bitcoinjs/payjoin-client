@@ -67,6 +67,16 @@ export default {
         wallet:
           'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
         payjoin:
+          'cHNidP8BAFICAAAAAdoRvMcqH3uh2NVL2FGlJxHL/8N4DIgRXLG8CeiP7UHNAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAA==',
+      },
+    },
+    {
+      description: 'should throw when payjoin has partial signatures present',
+      exception: 'The receiver added partial signatures to an input',
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
           'cHNidP8BAFICAAAAAdoRvMcqH3uh2NVL2FGlJxHL/8N4DIgRXLG8CeiP7UHNAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAPkHBAnXbxit4W8hymbVz+jiIH4EiY4ZzbGueMFePio8AiAVNhvfQhRhlgon4i2W6ySVpYuK/EXxeLzzF87gwlTBXQEAAA==',
       },
     },
