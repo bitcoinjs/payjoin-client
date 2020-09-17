@@ -29,7 +29,7 @@
     "src"
   ],
   "dependencies": {
-    "bitcoinjs-lib": "git://github.com/bitcoinjs/bitcoinjs-lib.git#f87a20caa7828f6f8c29049c73efd369ff81c57b"
+    "bitcoinjs-lib": "^5.2.0"
   },
   "devDependencies": {
     "@types/isomorphic-fetch": "0.0.35",
