@@ -60,13 +60,21 @@ export default {
       },
     },
     {
+      description: 'should throw when payjoin inputs are not finalized',
+      exception: "The receiver did not finalized one of their input",
+      vector: {
+        wallet:
+            'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+            'cHNidP8BAFICAAAAAdoRvMcqH3uh2NVL2FGlJxHL/8N4DIgRXLG8CeiP7UHNAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAA==',
+      },
+    },
+    {
       description: 'should throw when payjoin missing input from original',
       exception: "Receiver's PSBT is missing input #0 from the sent PSBT",
       vector: {
         wallet:
-          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
         payjoin:
-          'cHNidP8BAFICAAAAAdoRvMcqH3uh2NVL2FGlJxHL/8N4DIgRXLG8CeiP7UHNAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAA==',
       },
     },
     {
@@ -81,12 +89,12 @@ export default {
     },
     {
       description: 'should throw when payjoin has different input sequence',
-      exception: 'Input #0 from original PSBT have a different sequence',
+      exception: 'The proposedTxIn modified the sequence of one of our inputs',
       vector: {
         wallet:
           'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
         payjoin:
-          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAAqAAAAAUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
+          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAArAAAAAUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAA==',
       },
     },
   ],
