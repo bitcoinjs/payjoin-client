@@ -107,7 +107,7 @@ export class PayjoinClient {
       } => {
         return {
           originalTxIn: value,
-          signedPSBTInput: clonedPsbt.data.inputs[index],
+          signedPSBTInput: psbt.data.inputs[index],
         };
       });
       const originalOutputs = clonedPsbt.txOutputs.map((value, index): {
@@ -116,7 +116,7 @@ export class PayjoinClient {
       } => {
         return {
           originalTxOut: value,
-          signedPSBTInput: clonedPsbt.data.outputs[index],
+          signedPSBTInput: psbt.data.outputs[index],
         };
       });
       const feeOutput =
@@ -196,9 +196,12 @@ export class PayjoinClient {
           proposedPSBTInput.nonWitnessUtxo =
             input.signedPSBTInput.nonWitnessUtxo;
           proposedPSBTInput.witnessUtxo = input.signedPSBTInput.witnessUtxo;
-          // We fill up information we had on the signed PSBT, so we can sign it.
-
-          payjoinPsbt.updateInput(i, input.signedPSBTInput);
+          // We fill up information we had on the signed PSBT, so we can sign it.          
+          payjoinPsbt.data.inputs[i].bip32Derivation = input.signedPSBTInput.bip32Derivation|| [];
+          payjoinPsbt.data.inputs[i].nonWitnessUtxo = input.signedPSBTInput.nonWitnessUtxo;
+          payjoinPsbt.data.inputs[i].witnessUtxo = input.signedPSBTInput.witnessUtxo;
+          payjoinPsbt.data.inputs[i].redeemScript = input.signedPSBTInput.redeemScript;
+          payjoinPsbt.data.inputs[i].sighashType = input.signedPSBTInput.sighashType;
         } else {
           // Verify the PSBT input is finalized
           if (!isFinalized(proposedPSBTInput))
@@ -230,11 +233,13 @@ export class PayjoinClient {
       if (sequences.size !== 1)
         throw new Error('Mixed sequence detected in the proposal');
 
-      const originalFee = psbt.getFee();
+      const originalFee = clonedPsbt.getFee();
       let newFee: number;
+      const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       try {
-        newFee = payjoinPsbt.getFee();
-      } catch {
+        newFee = signedPsbt.getFee();
+      } catch(e) {
+        console.log(e);
         throw new Error(
           'The payjoin receiver did not included UTXO information to calculate fee correctly',
         );
@@ -333,7 +338,7 @@ export class PayjoinClient {
           );
       }
 
-      const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
+      // const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       const tx = signedPsbt.extractTransaction();
 
       // Now broadcast. If this fails, there's a possibility the server is
