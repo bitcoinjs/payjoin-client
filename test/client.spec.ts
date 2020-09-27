@@ -9,14 +9,6 @@ import { default as VECTORS } from './fixtures/client.fixtures';
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
 
-const p2shp2wpkhOutputScript = (pubkey: Buffer) =>
-  bitcoin.payments.p2sh({
-    redeem: bitcoin.payments.p2wpkh({ pubkey, network }),
-    network,
-  }).output;
-const p2wpkhOutputScript = (pubkey: Buffer) =>
-  bitcoin.payments.p2wpkh({ pubkey, network }).output;
-
 describe('requestPayjoin', () => {
   it('should exist', () => {
     expect(PayjoinClient).toBeDefined();
@@ -24,10 +16,13 @@ describe('requestPayjoin', () => {
   });
   VECTORS.valid.forEach((f) => {
     it('should request p2sh-p2wpkh payjoin', async () => {
-      await testPayjoin(f.p2shp2wpkh, p2shp2wpkhOutputScript);
+      let paymentScript = Buffer.from('a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87', 'hex');
+      await testPayjoin(f.p2shp2wpkh, ()=>{return paymentScript});
     });
     it('should request p2wpkh payjoin', async () => {
-      await testPayjoin(f.p2wpkh, p2wpkhOutputScript);
+
+      let paymentScript = Buffer.from('a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87', 'hex');
+      await testPayjoin(f.p2wpkh, ()=>{return paymentScript});
     });
   });
   VECTORS.invalid.forEach((f) => {
