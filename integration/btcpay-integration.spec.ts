@@ -73,7 +73,6 @@ async function testPayjoin(
     wallet,
     paymentScript: paymentScript,
     payjoinUrl: invoice.paymentUrls.BIP21 as string,
-    
   });
 
   await client.run();

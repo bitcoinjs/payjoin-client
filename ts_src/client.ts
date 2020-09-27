@@ -196,12 +196,17 @@ export class PayjoinClient {
           proposedPSBTInput.nonWitnessUtxo =
             input.signedPSBTInput.nonWitnessUtxo;
           proposedPSBTInput.witnessUtxo = input.signedPSBTInput.witnessUtxo;
-          // We fill up information we had on the signed PSBT, so we can sign it.          
-          payjoinPsbt.data.inputs[i].bip32Derivation = input.signedPSBTInput.bip32Derivation|| [];
-          payjoinPsbt.data.inputs[i].nonWitnessUtxo = input.signedPSBTInput.nonWitnessUtxo;
-          payjoinPsbt.data.inputs[i].witnessUtxo = input.signedPSBTInput.witnessUtxo;
-          payjoinPsbt.data.inputs[i].redeemScript = input.signedPSBTInput.redeemScript;
-          payjoinPsbt.data.inputs[i].sighashType = input.signedPSBTInput.sighashType;
+          // We fill up information we had on the signed PSBT, so we can sign it.
+          payjoinPsbt.data.inputs[i].bip32Derivation =
+            input.signedPSBTInput.bip32Derivation || [];
+          payjoinPsbt.data.inputs[i].nonWitnessUtxo =
+            input.signedPSBTInput.nonWitnessUtxo;
+          payjoinPsbt.data.inputs[i].witnessUtxo =
+            input.signedPSBTInput.witnessUtxo;
+          payjoinPsbt.data.inputs[i].redeemScript =
+            input.signedPSBTInput.redeemScript;
+          payjoinPsbt.data.inputs[i].sighashType =
+            input.signedPSBTInput.sighashType;
         } else {
           // Verify the PSBT input is finalized
           if (!isFinalized(proposedPSBTInput))
@@ -238,7 +243,7 @@ export class PayjoinClient {
       const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       try {
         newFee = signedPsbt.getFee();
-      } catch(e) {
+      } catch (e) {
         console.log(e);
         throw new Error(
           'The payjoin receiver did not included UTXO information to calculate fee correctly',

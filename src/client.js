@@ -74,13 +74,13 @@ class PayjoinClient {
       const originalInputs = clonedPsbt.txInputs.map((value, index) => {
         return {
           originalTxIn: value,
-          signedPSBTInput: clonedPsbt.data.inputs[index],
+          signedPSBTInput: psbt.data.inputs[index],
         };
       });
       const originalOutputs = clonedPsbt.txOutputs.map((value, index) => {
         return {
           originalTxOut: value,
-          signedPSBTInput: clonedPsbt.data.outputs[index],
+          signedPSBTInput: psbt.data.outputs[index],
         };
       });
       const feeOutput =
@@ -162,7 +162,16 @@ class PayjoinClient {
             input.signedPSBTInput.nonWitnessUtxo;
           proposedPSBTInput.witnessUtxo = input.signedPSBTInput.witnessUtxo;
           // We fill up information we had on the signed PSBT, so we can sign it.
-          payjoinPsbt.updateInput(i, input.signedPSBTInput);
+          payjoinPsbt.data.inputs[i].bip32Derivation =
+            input.signedPSBTInput.bip32Derivation || [];
+          payjoinPsbt.data.inputs[i].nonWitnessUtxo =
+            input.signedPSBTInput.nonWitnessUtxo;
+          payjoinPsbt.data.inputs[i].witnessUtxo =
+            input.signedPSBTInput.witnessUtxo;
+          payjoinPsbt.data.inputs[i].redeemScript =
+            input.signedPSBTInput.redeemScript;
+          payjoinPsbt.data.inputs[i].sighashType =
+            input.signedPSBTInput.sighashType;
         } else {
           // Verify the PSBT input is finalized
           if (!utils_1.isFinalized(proposedPSBTInput))
@@ -191,11 +200,13 @@ class PayjoinClient {
       // Verify that the payjoin proposal did not introduced mixed input's sequence.
       if (sequences.size !== 1)
         throw new Error('Mixed sequence detected in the proposal');
-      const originalFee = psbt.getFee();
+      const originalFee = clonedPsbt.getFee();
       let newFee;
+      const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       try {
-        newFee = payjoinPsbt.getFee();
-      } catch (_j) {
+        newFee = signedPsbt.getFee();
+      } catch (e) {
+        console.log(e);
         throw new Error(
           'The payjoin receiver did not included UTXO information to calculate fee correctly',
         );
@@ -289,7 +300,7 @@ class PayjoinClient {
         let newFeeRate;
         try {
           newFeeRate = payjoinPsbt.getFeeRate();
-        } catch (_k) {
+        } catch (_j) {
           throw new Error(
             'The payjoin receiver did not included UTXO information to calculate fee correctly',
           );
@@ -304,7 +315,7 @@ class PayjoinClient {
             'The payjoin receiver created a payjoin with a too low fee rate',
           );
       }
-      const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
+      // const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       const tx = signedPsbt.extractTransaction();
       // Now broadcast. If this fails, there's a possibility the server is
       // trying to leak information by double spending an input, this is why

@@ -16,13 +16,22 @@ describe('requestPayjoin', () => {
   });
   VECTORS.valid.forEach((f) => {
     it('should request p2sh-p2wpkh payjoin', async () => {
-      let paymentScript = Buffer.from('a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87', 'hex');
-      await testPayjoin(f.p2shp2wpkh, ()=>{return paymentScript});
+      let paymentScript = Buffer.from(
+        'a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87',
+        'hex',
+      );
+      await testPayjoin(f.p2shp2wpkh, () => {
+        return paymentScript;
+      });
     });
     it('should request p2wpkh payjoin', async () => {
-
-      let paymentScript = Buffer.from('a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87', 'hex');
-      await testPayjoin(f.p2wpkh, ()=>{return paymentScript});
+      let paymentScript = Buffer.from(
+        'a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87',
+        'hex',
+      );
+      await testPayjoin(f.p2wpkh, () => {
+        return paymentScript;
+      });
     });
   });
   VECTORS.invalid.forEach((f) => {
