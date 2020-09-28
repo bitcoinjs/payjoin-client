@@ -5,6 +5,7 @@ import {
 } from '../ts_src/index';
 import * as bitcoin from 'bitcoinjs-lib';
 import { default as VECTORS } from './fixtures/client.fixtures';
+import { getEndpointUrl } from '../ts_src/utils';
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
@@ -40,6 +41,32 @@ describe('requestPayjoin', () => {
         new RegExp(f.exception),
       );
     });
+  });
+});
+
+describe('getEndpointUrl', () => {
+  it('should exist', () => {
+    expect(typeof getEndpointUrl).toBe('function');
+  });
+  it('should add parameters specified', () => {
+    expect(
+      getEndpointUrl('https://gozo.com', {
+        additionalfeeoutputindex: 0,
+        disableOutputSubstitution: false,
+        minimumFeeRate: 1,
+        payjoinVersion: 2,
+        maxadditionalfeecontribution: 2,
+      }),
+    ).toBe(
+      'https://gozo.com/?disableoutputsubstitution=false&v=2&minfeerate=1&maxadditionalfeecontribution=2&additionalfeeoutputindex=0',
+    );
+
+    expect(
+        getEndpointUrl('https://gozo.com', {}),
+    ).toBe(
+        'https://gozo.com',
+    );
+    
   });
 });
 

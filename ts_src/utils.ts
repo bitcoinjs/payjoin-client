@@ -1,5 +1,6 @@
 import { Psbt } from 'bitcoinjs-lib';
 import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
+import { PayjoinClientOptionalParameters } from './client';
 
 export enum ScriptPubKeyType {
   /// <summary>
@@ -104,4 +105,46 @@ export function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number {
     default:
       return 110;
   }
+}
+
+export function getEndpointUrl(
+  url: string,
+  payjoinParameters?: PayjoinClientOptionalParameters,
+): string {
+  if (!payjoinParameters) {
+    return url;
+  }
+  const parsedURL = new URL(url);
+
+  if (payjoinParameters.disableOutputSubstitution !== undefined) {
+    parsedURL.searchParams.set(
+      'disableoutputsubstitution',
+      payjoinParameters.disableOutputSubstitution.toString(),
+    );
+  }
+  if (payjoinParameters.payjoinVersion !== undefined) {
+    parsedURL.searchParams.set(
+      'v',
+      payjoinParameters.payjoinVersion.toString(),
+    );
+  }
+  if (payjoinParameters.minimumFeeRate !== undefined) {
+    parsedURL.searchParams.set(
+      'minfeerate',
+      payjoinParameters.minimumFeeRate.toString(),
+    );
+  }
+  if (payjoinParameters.maxadditionalfeecontribution !== undefined) {
+    parsedURL.searchParams.set(
+      'maxadditionalfeecontribution',
+      payjoinParameters.maxadditionalfeecontribution.toString(),
+    );
+  }
+  if (payjoinParameters.additionalfeeoutputindex !== undefined) {
+    parsedURL.searchParams.set(
+      'additionalfeeoutputindex',
+      payjoinParameters.additionalfeeoutputindex.toString(),
+    );
+  }
+  return parsedURL.href;
 }

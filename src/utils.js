@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.getVirtualSize = exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputScriptPubKeyType = exports.getInputsScriptPubKeyType = exports.getFee = exports.ScriptPubKeyType = void 0;
+exports.getEndpointUrl = exports.getVirtualSize = exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputScriptPubKeyType = exports.getInputsScriptPubKeyType = exports.getFee = exports.ScriptPubKeyType = void 0;
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
   /// <summary>
@@ -95,3 +95,41 @@ function getVirtualSize(scriptPubKeyType) {
   }
 }
 exports.getVirtualSize = getVirtualSize;
+function getEndpointUrl(url, payjoinParameters) {
+  if (!payjoinParameters) {
+    return url;
+  }
+  const parsedURL = new URL(url);
+  if (payjoinParameters.disableOutputSubstitution !== undefined) {
+    parsedURL.searchParams.set(
+      'disableoutputsubstitution',
+      payjoinParameters.disableOutputSubstitution.toString(),
+    );
+  }
+  if (payjoinParameters.payjoinVersion !== undefined) {
+    parsedURL.searchParams.set(
+      'v',
+      payjoinParameters.payjoinVersion.toString(),
+    );
+  }
+  if (payjoinParameters.minimumFeeRate !== undefined) {
+    parsedURL.searchParams.set(
+      'minfeerate',
+      payjoinParameters.minimumFeeRate.toString(),
+    );
+  }
+  if (payjoinParameters.maxadditionalfeecontribution !== undefined) {
+    parsedURL.searchParams.set(
+      'maxadditionalfeecontribution',
+      payjoinParameters.maxadditionalfeecontribution.toString(),
+    );
+  }
+  if (payjoinParameters.additionalfeeoutputindex !== undefined) {
+    parsedURL.searchParams.set(
+      'additionalfeeoutputindex',
+      payjoinParameters.additionalfeeoutputindex.toString(),
+    );
+  }
+  return parsedURL.href;
+}
+exports.getEndpointUrl = getEndpointUrl;

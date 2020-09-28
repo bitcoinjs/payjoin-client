@@ -14,7 +14,6 @@ export declare class PayjoinClient {
     private payjoinRequester;
     private payjoinParameters?;
     constructor(opts: PayjoinClientOpts);
-    private getEndpointUrl;
     run(): Promise<void>;
 }
 declare type PayjoinClientOpts = PayjoinClientOptsUrl | PayjoinClientOptsRequester;

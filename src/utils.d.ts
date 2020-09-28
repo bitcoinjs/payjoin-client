@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { Psbt } from 'bitcoinjs-lib';
 import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
+import { PayjoinClientOptionalParameters } from './client';
 export declare enum ScriptPubKeyType {
     Unsupported = 0,
     Legacy = 1,
@@ -16,3 +17,4 @@ export declare function hasKeypathInformationSet(item: {
 export declare function isFinalized(input: PsbtInput): boolean;
 export declare function getInputIndex(psbt: Psbt, prevOutHash: Buffer, prevOutIndex: number): number;
 export declare function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number;
+export declare function getEndpointUrl(url: string, payjoinParameters?: PayjoinClientOptionalParameters): string;

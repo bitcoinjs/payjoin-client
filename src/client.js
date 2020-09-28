@@ -13,46 +13,9 @@ class PayjoinClient {
       this.payjoinRequester = opts.payjoinRequester;
     } else {
       this.payjoinRequester = new request_1.PayjoinRequester(
-        this.getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
+        utils_1.getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
       );
     }
-  }
-  getEndpointUrl(url, payjoinParameters) {
-    if (!payjoinParameters) {
-      return url;
-    }
-    const parsedURL = new URL(url);
-    if (payjoinParameters.disableOutputSubstitution !== undefined) {
-      parsedURL.searchParams.set(
-        'disableoutputsubstitution',
-        payjoinParameters.disableOutputSubstitution.toString(),
-      );
-    }
-    if (payjoinParameters.payjoinVersion !== undefined) {
-      parsedURL.searchParams.set(
-        'v',
-        payjoinParameters.payjoinVersion.toString(),
-      );
-    }
-    if (payjoinParameters.minimumFeeRate !== undefined) {
-      parsedURL.searchParams.set(
-        'minfeerate',
-        payjoinParameters.minimumFeeRate.toString(),
-      );
-    }
-    if (payjoinParameters.maxadditionalfeecontribution !== undefined) {
-      parsedURL.searchParams.set(
-        'maxadditionalfeecontribution',
-        payjoinParameters.maxadditionalfeecontribution.toString(),
-      );
-    }
-    if (payjoinParameters.additionalfeeoutputindex !== undefined) {
-      parsedURL.searchParams.set(
-        'additionalfeeoutputindex',
-        payjoinParameters.additionalfeeoutputindex.toString(),
-      );
-    }
-    return parsedURL.href;
   }
   async run() {
     var _a, _b, _c, _d, _e, _f, _g, _h;

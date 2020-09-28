@@ -1,6 +1,7 @@
 import { IPayjoinRequester, PayjoinRequester } from './request';
 import { IPayjoinClientWallet } from './wallet';
 import {
+  getEndpointUrl,
   getFee,
   getInputIndex,
   getInputScriptPubKeyType,
@@ -35,51 +36,9 @@ export class PayjoinClient {
       this.payjoinRequester = opts.payjoinRequester;
     } else {
       this.payjoinRequester = new PayjoinRequester(
-        this.getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
+        getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
       );
     }
-  }
-
-  private getEndpointUrl(
-    url: string,
-    payjoinParameters?: PayjoinClientOptionalParameters,
-  ): string {
-    if (!payjoinParameters) {
-      return url;
-    }
-    const parsedURL = new URL(url);
-
-    if (payjoinParameters.disableOutputSubstitution !== undefined) {
-      parsedURL.searchParams.set(
-        'disableoutputsubstitution',
-        payjoinParameters.disableOutputSubstitution.toString(),
-      );
-    }
-    if (payjoinParameters.payjoinVersion !== undefined) {
-      parsedURL.searchParams.set(
-        'v',
-        payjoinParameters.payjoinVersion.toString(),
-      );
-    }
-    if (payjoinParameters.minimumFeeRate !== undefined) {
-      parsedURL.searchParams.set(
-        'minfeerate',
-        payjoinParameters.minimumFeeRate.toString(),
-      );
-    }
-    if (payjoinParameters.maxadditionalfeecontribution !== undefined) {
-      parsedURL.searchParams.set(
-        'maxadditionalfeecontribution',
-        payjoinParameters.maxadditionalfeecontribution.toString(),
-      );
-    }
-    if (payjoinParameters.additionalfeeoutputindex !== undefined) {
-      parsedURL.searchParams.set(
-        'additionalfeeoutputindex',
-        payjoinParameters.additionalfeeoutputindex.toString(),
-      );
-    }
-    return parsedURL.href;
   }
 
   async run(): Promise<void> {
