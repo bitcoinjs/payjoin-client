@@ -3,6 +3,7 @@ import { RegtestUtils } from 'regtest-client';
 import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
 import * as fetch from 'isomorphic-fetch';
 import * as bitcoin from 'bitcoinjs-lib';
+import * as qs from 'querystring';
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
@@ -59,6 +60,8 @@ async function testPayjoin(
     currency: 'USD',
     price: 1.12,
   });
+  const qsVars = qs.decode(invoice.paymentUrls.BIP21 as string);
+  const pjEndpoint = qsVars.pj as string;
   const paymentScript = bitcoin.address.toOutputScript(
     invoice.bitcoinAddress,
     network,
@@ -72,7 +75,7 @@ async function testPayjoin(
   const client = new PayjoinClient({
     wallet,
     paymentScript: paymentScript,
-    payjoinUrl: invoice.paymentUrls.BIP21 as string,
+    payjoinUrl: pjEndpoint,
   });
 
   await client.run();
