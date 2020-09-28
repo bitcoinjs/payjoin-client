@@ -8,7 +8,6 @@ export declare enum ScriptPubKeyType {
     SegwitP2SH = 3
 }
 export declare function getFee(feeRate: number, size: number): number;
-export declare function checkSanity(psbt: Psbt): string[][];
 export declare function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType;
 export declare function getInputScriptPubKeyType(psbt: Psbt, i: number): ScriptPubKeyType;
 export declare function hasKeypathInformationSet(item: {
