@@ -15,6 +15,34 @@ describe('requestPayjoin', () => {
     expect(PayjoinClient).toBeDefined();
     expect(typeof PayjoinClient).toBe('function'); // JS classes are functions
   });
+
+  it('should throw on invalid opts', () => {
+    expect(() => {
+      new PayjoinClient(null as any);
+    }).toThrow();
+    expect(() => {
+      new PayjoinClient({
+        payjoinUrl: 'hello',
+        wallet: new TestWallet(null as any, null as any),
+        paymentScript: null as any,
+      });
+    }).toThrow();
+    expect(() => {
+      new PayjoinClient({
+        payjoinUrl: null as any,
+        wallet: new TestWallet(null as any, null as any),
+        paymentScript: Buffer.from('chocolate', 'hex'),
+      });
+    }).toThrow();
+  });
+  expect(() => {
+    new PayjoinClient({
+      payjoinRequester: null as any,
+      wallet: new TestWallet(null as any, null as any),
+      paymentScript: Buffer.from('chocolate', 'hex'),
+    });
+  }).toThrow();
+
   VECTORS.valid.forEach((f) => {
     it('should request p2sh-p2wpkh payjoin', async () => {
       let paymentScript = Buffer.from(
@@ -37,9 +65,15 @@ describe('requestPayjoin', () => {
   });
   VECTORS.invalid.forEach((f) => {
     it(f.description, async () => {
-      await expect(testPayjoin(f.vector, () => {})).rejects.toThrowError(
-        new RegExp(f.exception),
+      let paymentScript = Buffer.from(
+        'a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87',
+        'hex',
       );
+      await expect(
+        testPayjoin(f.vector, () => {
+          return paymentScript;
+        }),
+      ).rejects.toThrowError(new RegExp(f.exception));
     });
   });
 });

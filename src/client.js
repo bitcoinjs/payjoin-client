@@ -6,11 +6,25 @@ const utils_1 = require('./utils');
 const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
 class PayjoinClient {
   constructor(opts) {
+    if (!opts.wallet) {
+      throw new Error(
+        'wallet (IPayjoinClientWallet) was not provided to PayjoinClient',
+      );
+    }
+    if (!opts.paymentScript) {
+      throw new Error(
+        'paymentScript (output script of BIP21 destination) was not provided to PayjoinClient',
+      );
+    }
     this.wallet = opts.wallet;
     this.paymentScript = opts.paymentScript;
     this.payjoinParameters = opts.payjoinParameters;
     if (isRequesterOpts(opts)) {
       this.payjoinRequester = opts.payjoinRequester;
+    } else if (!opts.payjoinUrl) {
+      throw new Error(
+        'payjoinUrl (value of the key pj of BIP21) OR payjoinRequester (IPayjoinRequester) was not provided to PayjoinClient',
+      );
     } else {
       this.payjoinRequester = new request_1.PayjoinRequester(
         utils_1.getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
