@@ -18,8 +18,8 @@ const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
 export interface PayjoinClientOptionalParameters {
   disableOutputSubstitution?: boolean;
   payjoinVersion?: number;
-  additionalfeeoutputindex?: number;
-  maxadditionalfeecontribution?: number;
+  additionalFeeOutputIndex?: number;
+  maxAdditionalFeeContribution?: number;
   minimumFeeRate?: number;
 }
 
@@ -93,9 +93,9 @@ export class PayjoinClient {
         };
       });
       const feeOutput =
-        this.payjoinParameters?.additionalfeeoutputindex !== undefined
+        this.payjoinParameters?.additionalFeeOutputIndex !== undefined
           ? clonedPsbt.txOutputs[
-              this.payjoinParameters?.additionalfeeoutputindex
+              this.payjoinParameters?.additionalFeeOutputIndex
             ]
           : null;
       const originalFeeRate = clonedPsbt.getFeeRate();
@@ -245,13 +245,13 @@ export class PayjoinClient {
           const originalOutput = originalOutputs.splice(0, 1)[0];
           if (
             originalOutput.originalTxOut === feeOutput &&
-            this.payjoinParameters?.maxadditionalfeecontribution
+            this.payjoinParameters?.maxAdditionalFeeContribution
           ) {
             const actualContribution = feeOutput.value - proposedTxOut.value;
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
             if (
               actualContribution >
-              this.payjoinParameters?.maxadditionalfeecontribution
+              this.payjoinParameters?.maxAdditionalFeeContribution
             )
               throw new Error(
                 'The actual contribution is more than maxadditionalfeecontribution',

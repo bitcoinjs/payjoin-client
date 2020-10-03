@@ -4,8 +4,8 @@ import { IPayjoinClientWallet } from './wallet';
 export interface PayjoinClientOptionalParameters {
     disableOutputSubstitution?: boolean;
     payjoinVersion?: number;
-    additionalfeeoutputindex?: number;
-    maxadditionalfeecontribution?: number;
+    additionalFeeOutputIndex?: number;
+    maxAdditionalFeeContribution?: number;
     minimumFeeRate?: number;
 }
 export declare class PayjoinClient {

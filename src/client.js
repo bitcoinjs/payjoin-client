@@ -63,11 +63,11 @@ class PayjoinClient {
       const feeOutput =
         ((_a = this.payjoinParameters) === null || _a === void 0
           ? void 0
-          : _a.additionalfeeoutputindex) !== undefined
+          : _a.additionalFeeOutputIndex) !== undefined
           ? clonedPsbt.txOutputs[
               (_b = this.payjoinParameters) === null || _b === void 0
                 ? void 0
-                : _b.additionalfeeoutputindex
+                : _b.additionalFeeOutputIndex
             ]
           : null;
       const originalFeeRate = clonedPsbt.getFeeRate();
@@ -209,7 +209,7 @@ class PayjoinClient {
             originalOutput.originalTxOut === feeOutput &&
             ((_e = this.payjoinParameters) === null || _e === void 0
               ? void 0
-              : _e.maxadditionalfeecontribution)
+              : _e.maxAdditionalFeeContribution)
           ) {
             const actualContribution = feeOutput.value - proposedTxOut.value;
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
@@ -217,7 +217,7 @@ class PayjoinClient {
               actualContribution >
               ((_f = this.payjoinParameters) === null || _f === void 0
                 ? void 0
-                : _f.maxadditionalfeecontribution)
+                : _f.maxAdditionalFeeContribution)
             )
               throw new Error(
                 'The actual contribution is more than maxadditionalfeecontribution',

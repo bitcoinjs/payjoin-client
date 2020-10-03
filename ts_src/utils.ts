@@ -134,16 +134,16 @@ export function getEndpointUrl(
       payjoinParameters.minimumFeeRate.toString(),
     );
   }
-  if (payjoinParameters.maxadditionalfeecontribution !== undefined) {
+  if (payjoinParameters.maxAdditionalFeeContribution !== undefined) {
     parsedURL.searchParams.set(
       'maxadditionalfeecontribution',
-      payjoinParameters.maxadditionalfeecontribution.toString(),
+      payjoinParameters.maxAdditionalFeeContribution.toString(),
     );
   }
-  if (payjoinParameters.additionalfeeoutputindex !== undefined) {
+  if (payjoinParameters.additionalFeeOutputIndex !== undefined) {
     parsedURL.searchParams.set(
       'additionalfeeoutputindex',
-      payjoinParameters.additionalfeeoutputindex.toString(),
+      payjoinParameters.additionalFeeOutputIndex.toString(),
     );
   }
   return parsedURL.href;
