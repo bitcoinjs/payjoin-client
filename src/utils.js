@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.getEndpointUrl = exports.getVirtualSize = exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputScriptPubKeyType = exports.getInputsScriptPubKeyType = exports.getFee = exports.ScriptPubKeyType = void 0;
+const qs = require('querystring');
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
   /// <summary>
@@ -95,41 +96,68 @@ function getVirtualSize(scriptPubKeyType) {
   }
 }
 exports.getVirtualSize = getVirtualSize;
+function addSlash(url) {
+  const split = url.split('?');
+  if (split.length > 2) {
+    throw new Error('invalid URL');
+  }
+  if (split[0].slice(-1) !== '/') {
+    split[0] += '/';
+  }
+  return split.join('?');
+}
+function setParam(url, key, value) {
+  // adds or changes a ? or & parameter for a url string
+  // returns the changed string.
+  const split = url.split('?');
+  if (split.length === 1) {
+    return `${split[0]}?${qs.escape(key)}=${qs.escape(value)}`;
+  } else {
+    const parsed = qs.parse(split[1]);
+    parsed[key] = value;
+    return `${split[0]}?${qs.stringify(parsed)}`;
+  }
+}
 function getEndpointUrl(url, payjoinParameters) {
   if (!payjoinParameters) {
     return url;
   }
-  const parsedURL = new URL(url);
+  let resultUrl = addSlash(url);
   if (payjoinParameters.disableOutputSubstitution !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'disableoutputsubstitution',
       payjoinParameters.disableOutputSubstitution.toString(),
     );
   }
   if (payjoinParameters.payjoinVersion !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'v',
       payjoinParameters.payjoinVersion.toString(),
     );
   }
   if (payjoinParameters.minimumFeeRate !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'minfeerate',
       payjoinParameters.minimumFeeRate.toString(),
     );
   }
   if (payjoinParameters.maxAdditionalFeeContribution !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'maxadditionalfeecontribution',
       payjoinParameters.maxAdditionalFeeContribution.toString(),
     );
   }
   if (payjoinParameters.additionalFeeOutputIndex !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'additionalfeeoutputindex',
       payjoinParameters.additionalFeeOutputIndex.toString(),
     );
   }
-  return parsedURL.href;
+  return resultUrl;
 }
 exports.getEndpointUrl = getEndpointUrl;

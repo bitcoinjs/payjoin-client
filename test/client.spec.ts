@@ -85,11 +85,11 @@ describe('getEndpointUrl', () => {
   it('should add parameters specified', () => {
     expect(
       getEndpointUrl('https://gozo.com', {
-        additionalfeeoutputindex: 0,
+        additionalFeeOutputIndex: 0,
         disableOutputSubstitution: false,
         minimumFeeRate: 1,
         payjoinVersion: 2,
-        maxadditionalfeecontribution: 2,
+        maxAdditionalFeeContribution: 2,
       }),
     ).toBe(
       'https://gozo.com/?disableoutputsubstitution=false&v=2&minfeerate=1&maxadditionalfeecontribution=2&additionalfeeoutputindex=0',

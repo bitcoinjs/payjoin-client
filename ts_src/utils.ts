@@ -1,4 +1,5 @@
 import { Psbt } from 'bitcoinjs-lib';
+import * as qs from 'querystring';
 import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
 import { PayjoinClientOptionalParameters } from './client';
 
@@ -107,6 +108,30 @@ export function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number {
   }
 }
 
+function addSlash(url: string): string {
+  const split = url.split('?');
+  if (split.length > 2) {
+    throw new Error('invalid URL');
+  }
+  if (split[0].slice(-1) !== '/') {
+    split[0] += '/';
+  }
+  return split.join('?');
+}
+
+function setParam(url: string, key: string, value: string): string {
+  // adds or changes a ? or & parameter for a url string
+  // returns the changed string.
+  const split = url.split('?');
+  if (split.length === 1) {
+    return `${split[0]}?${qs.escape(key)}=${qs.escape(value)}`;
+  } else {
+    const parsed = qs.parse(split[1]);
+    parsed[key] = value;
+    return `${split[0]}?${qs.stringify(parsed)}`;
+  }
+}
+
 export function getEndpointUrl(
   url: string,
   payjoinParameters?: PayjoinClientOptionalParameters,
@@ -114,37 +139,42 @@ export function getEndpointUrl(
   if (!payjoinParameters) {
     return url;
   }
-  const parsedURL = new URL(url);
 
+  let resultUrl = addSlash(url);
   if (payjoinParameters.disableOutputSubstitution !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'disableoutputsubstitution',
       payjoinParameters.disableOutputSubstitution.toString(),
     );
   }
   if (payjoinParameters.payjoinVersion !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'v',
       payjoinParameters.payjoinVersion.toString(),
     );
   }
   if (payjoinParameters.minimumFeeRate !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'minfeerate',
       payjoinParameters.minimumFeeRate.toString(),
     );
   }
   if (payjoinParameters.maxAdditionalFeeContribution !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'maxadditionalfeecontribution',
       payjoinParameters.maxAdditionalFeeContribution.toString(),
     );
   }
   if (payjoinParameters.additionalFeeOutputIndex !== undefined) {
-    parsedURL.searchParams.set(
+    resultUrl = setParam(
+      resultUrl,
       'additionalfeeoutputindex',
       payjoinParameters.additionalFeeOutputIndex.toString(),
     );
   }
-  return parsedURL.href;
+  return resultUrl;
 }
