@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.getEndpointUrl = exports.getVirtualSize = exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputScriptPubKeyType = exports.getInputsScriptPubKeyType = exports.getFee = exports.ScriptPubKeyType = void 0;
+const qs = require('querystring');
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
   /// <summary>
@@ -95,38 +96,33 @@ function getVirtualSize(scriptPubKeyType) {
   }
 }
 exports.getVirtualSize = getVirtualSize;
+function addSlash(url) {
+  const split = url.split('?');
+  if (split.length > 2) {
+    throw new Error('invalid URL');
+  }
+  if (split[0].slice(-1) !== '/') {
+    split[0] += '/';
+  }
+  return split.join('?');
+}
 function setParam(url, key, value) {
   // adds or changes a ? or & parameter for a url string
   // returns the changed string.
   const split = url.split('?');
-  const qsValue = `${key}=${encodeURIComponent(value)}`;
-  if (split.length > 1) {
-    split[1] = removeParam(decodeURIComponent(split[1]), key);
-    split[1] += `${split[1].length === 0 ? '' : '&'}${qsValue}`;
+  if (split.length === 1) {
+    return `${split[0]}?${qs.escape(key)}=${qs.escape(value)}`;
   } else {
-    split.push(qsValue);
+    const parsed = qs.parse(split[1]);
+    parsed[key] = value;
+    return `${split[0]}?${qs.stringify(parsed)}`;
   }
-  return `${split[0]}?${split[1]}`;
-}
-function removeParam(queryString, key) {
-  const matchedKeyIndex = queryString.indexOf(`${key}=`);
-  if (matchedKeyIndex !== -1) {
-    const endIndex = queryString.indexOf('&', matchedKeyIndex);
-    if (endIndex === -1) {
-      return queryString.substr(0, matchedKeyIndex);
-    } else {
-      return `${queryString.substr(0, matchedKeyIndex)}${queryString.substr(
-        endIndex,
-      )}`;
-    }
-  }
-  return queryString;
 }
 function getEndpointUrl(url, payjoinParameters) {
   if (!payjoinParameters) {
     return url;
   }
-  let resultUrl = url;
+  let resultUrl = addSlash(url);
   if (payjoinParameters.disableOutputSubstitution !== undefined) {
     resultUrl = setParam(
       resultUrl,

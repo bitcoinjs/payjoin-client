@@ -92,13 +92,10 @@ describe('getEndpointUrl', () => {
         maxAdditionalFeeContribution: 2,
       }),
     ).toBe(
-      'https://gozo.com?disableoutputsubstitution=false&v=2&minfeerate=1&maxadditionalfeecontribution=2&additionalfeeoutputindex=0',
+      'https://gozo.com/?disableoutputsubstitution=false&v=2&minfeerate=1&maxadditionalfeecontribution=2&additionalfeeoutputindex=0',
     );
 
-    expect(getEndpointUrl('https://gozo.com', {})).toBe('https://gozo.com');
-    expect(getEndpointUrl('https://gozo.com?v=2', { payjoinVersion: 4 })).toBe(
-      'https://gozo.com?v=4',
-    );
+    expect(getEndpointUrl('https://gozo.com', {})).toBe('https://gozo.com/');
   });
 });
 
