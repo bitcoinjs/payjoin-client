@@ -22,6 +22,7 @@ interface PayjoinClientOptsUrl {
     payjoinUrl: string;
     paymentScript: Buffer;
     payjoinParameters?: PayjoinClientOptionalParameters;
+    getEndpointUrl?: (url: string, payjoinParameters?: PayjoinClientOptionalParameters) => string;
 }
 interface PayjoinClientOptsRequester {
     wallet: IPayjoinClientWallet;

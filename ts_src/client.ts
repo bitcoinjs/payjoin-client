@@ -49,8 +49,9 @@ export class PayjoinClient {
         'payjoinUrl (value of the key pj of BIP21) OR payjoinRequester (IPayjoinRequester) was not provided to PayjoinClient',
       );
     } else {
+      const endpointFunc = opts.getEndpointUrl || getEndpointUrl;
       this.payjoinRequester = new PayjoinRequester(
-        getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
+        endpointFunc(opts.payjoinUrl, opts.payjoinParameters),
       );
     }
   }
@@ -351,6 +352,10 @@ interface PayjoinClientOptsUrl {
   payjoinUrl: string;
   paymentScript: Buffer;
   payjoinParameters?: PayjoinClientOptionalParameters;
+  getEndpointUrl?: (
+    url: string,
+    payjoinParameters?: PayjoinClientOptionalParameters,
+  ) => string;
 }
 
 interface PayjoinClientOptsRequester {

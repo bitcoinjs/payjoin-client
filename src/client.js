@@ -26,8 +26,9 @@ class PayjoinClient {
         'payjoinUrl (value of the key pj of BIP21) OR payjoinRequester (IPayjoinRequester) was not provided to PayjoinClient',
       );
     } else {
+      const endpointFunc = opts.getEndpointUrl || utils_1.getEndpointUrl;
       this.payjoinRequester = new request_1.PayjoinRequester(
-        utils_1.getEndpointUrl(opts.payjoinUrl, opts.payjoinParameters),
+        endpointFunc(opts.payjoinUrl, opts.payjoinParameters),
       );
     }
   }
