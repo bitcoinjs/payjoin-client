@@ -107,44 +107,58 @@ export function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number {
   }
 }
 
+function setParam(url: string, key: string, value: string): string {
+  const parsedURL = new URL(url);
+  parsedURL.searchParams.set(key, value);
+  return parsedURL.href;
+}
+
 export function getEndpointUrl(
   url: string,
   payjoinParameters?: PayjoinClientOptionalParameters,
+  setParamFunc?: (url: string, key: string, value: string) => string,
 ): string {
   if (!payjoinParameters) {
     return url;
   }
-  const parsedURL = new URL(url);
+  let result = url;
+
+  setParamFunc = setParamFunc || setParam;
 
   if (payjoinParameters.disableOutputSubstitution !== undefined) {
-    parsedURL.searchParams.set(
+    result = setParamFunc(
+      result,
       'disableoutputsubstitution',
       payjoinParameters.disableOutputSubstitution.toString(),
     );
   }
   if (payjoinParameters.payjoinVersion !== undefined) {
-    parsedURL.searchParams.set(
+    result = setParamFunc(
+      result,
       'v',
       payjoinParameters.payjoinVersion.toString(),
     );
   }
   if (payjoinParameters.minimumFeeRate !== undefined) {
-    parsedURL.searchParams.set(
+    result = setParamFunc(
+      result,
       'minfeerate',
       payjoinParameters.minimumFeeRate.toString(),
     );
   }
   if (payjoinParameters.maxAdditionalFeeContribution !== undefined) {
-    parsedURL.searchParams.set(
+    result = setParamFunc(
+      result,
       'maxadditionalfeecontribution',
       payjoinParameters.maxAdditionalFeeContribution.toString(),
     );
   }
   if (payjoinParameters.additionalFeeOutputIndex !== undefined) {
-    parsedURL.searchParams.set(
+    result = setParamFunc(
+      result,
       'additionalfeeoutputindex',
       payjoinParameters.additionalFeeOutputIndex.toString(),
     );
   }
-  return parsedURL.href;
+  return result;
 }

@@ -17,4 +17,4 @@ export declare function hasKeypathInformationSet(item: {
 export declare function isFinalized(input: PsbtInput): boolean;
 export declare function getInputIndex(psbt: Psbt, prevOutHash: Buffer, prevOutIndex: number): number;
 export declare function getVirtualSize(scriptPubKeyType?: ScriptPubKeyType): number;
-export declare function getEndpointUrl(url: string, payjoinParameters?: PayjoinClientOptionalParameters): string;
+export declare function getEndpointUrl(url: string, payjoinParameters?: PayjoinClientOptionalParameters, setParamFunc?: (url: string, key: string, value: string) => string): string;
