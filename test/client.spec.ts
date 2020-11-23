@@ -110,6 +110,7 @@ async function testPayjoin(
     wallet,
     payjoinRequester,
     paymentScript: getOutputScript(),
+    payjoinParameters: vector.payjoinParameters,
   });
 
   await client.run();

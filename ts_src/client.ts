@@ -87,17 +87,17 @@ export class PayjoinClient {
       const originalOutputs = clonedPsbt.txOutputs.map((value, index): {
         originalTxOut: PsbtTxOutput;
         signedPSBTInput: PsbtOutput;
+        index: number;
       } => {
         return {
           originalTxOut: value,
           signedPSBTInput: psbt.data.outputs[index],
+          index,
         };
       });
       const feeOutput =
         this.payjoinParameters?.additionalFeeOutputIndex !== undefined
-          ? clonedPsbt.txOutputs[
-              this.payjoinParameters?.additionalFeeOutputIndex
-            ]
+          ? originalOutputs[this.payjoinParameters?.additionalFeeOutputIndex]
           : null;
       const originalFeeRate = clonedPsbt.getFeeRate();
       const allowOutputSubstitution = !(
@@ -218,7 +218,6 @@ export class PayjoinClient {
       try {
         newFee = signedPsbt.getFee();
       } catch (e) {
-        console.log(e);
         throw new Error(
           'The payjoin receiver did not included UTXO information to calculate fee correctly',
         );
@@ -245,17 +244,21 @@ export class PayjoinClient {
         if (isOriginalOutput) {
           const originalOutput = originalOutputs.splice(0, 1)[0];
           if (
-            originalOutput.originalTxOut === feeOutput &&
-            this.payjoinParameters?.maxAdditionalFeeContribution
+            feeOutput &&
+            originalOutput.index ===
+              this.payjoinParameters?.additionalFeeOutputIndex &&
+            this.payjoinParameters?.maxAdditionalFeeContribution &&
+            proposedTxOut.value !== feeOutput.originalTxOut.value
           ) {
-            const actualContribution = feeOutput.value - proposedTxOut.value;
+            const actualContribution =
+              feeOutput.originalTxOut.value - proposedTxOut.value;
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
             if (
               actualContribution >
               this.payjoinParameters?.maxAdditionalFeeContribution
             )
               throw new Error(
-                'The actual contribution is more than maxadditionalfeecontribution',
+                `The actual contribution is more than maxadditionalfeecontribution`,
               );
             // Make sure the actual contribution is only paying fee
             if (actualContribution > additionalFee)

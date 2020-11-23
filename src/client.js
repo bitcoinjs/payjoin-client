@@ -33,7 +33,7 @@ class PayjoinClient {
     }
   }
   async run() {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const psbt = await this.wallet.getPsbt();
     const clonedPsbt = psbt.clone();
     const originalType = utils_1.getInputsScriptPubKeyType(clonedPsbt);
@@ -59,13 +59,14 @@ class PayjoinClient {
         return {
           originalTxOut: value,
           signedPSBTInput: psbt.data.outputs[index],
+          index,
         };
       });
       const feeOutput =
         ((_a = this.payjoinParameters) === null || _a === void 0
           ? void 0
           : _a.additionalFeeOutputIndex) !== undefined
-          ? clonedPsbt.txOutputs[
+          ? originalOutputs[
               (_b = this.payjoinParameters) === null || _b === void 0
                 ? void 0
                 : _b.additionalFeeOutputIndex
@@ -184,7 +185,6 @@ class PayjoinClient {
       try {
         newFee = signedPsbt.getFee();
       } catch (e) {
-        console.log(e);
         throw new Error(
           'The payjoin receiver did not included UTXO information to calculate fee correctly',
         );
@@ -207,21 +207,27 @@ class PayjoinClient {
         if (isOriginalOutput) {
           const originalOutput = originalOutputs.splice(0, 1)[0];
           if (
-            originalOutput.originalTxOut === feeOutput &&
-            ((_e = this.payjoinParameters) === null || _e === void 0
+            feeOutput &&
+            originalOutput.index ===
+              ((_e = this.payjoinParameters) === null || _e === void 0
+                ? void 0
+                : _e.additionalFeeOutputIndex) &&
+            ((_f = this.payjoinParameters) === null || _f === void 0
               ? void 0
-              : _e.maxAdditionalFeeContribution)
+              : _f.maxAdditionalFeeContribution) &&
+            proposedTxOut.value !== feeOutput.originalTxOut.value
           ) {
-            const actualContribution = feeOutput.value - proposedTxOut.value;
+            const actualContribution =
+              feeOutput.originalTxOut.value - proposedTxOut.value;
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
             if (
               actualContribution >
-              ((_f = this.payjoinParameters) === null || _f === void 0
+              ((_g = this.payjoinParameters) === null || _g === void 0
                 ? void 0
-                : _f.maxAdditionalFeeContribution)
+                : _g.maxAdditionalFeeContribution)
             )
               throw new Error(
-                'The actual contribution is more than maxadditionalfeecontribution',
+                `The actual contribution is more than maxadditionalfeecontribution`,
               );
             // Make sure the actual contribution is only paying fee
             if (actualContribution > additionalFee)
@@ -271,23 +277,23 @@ class PayjoinClient {
       }
       // If minfeerate was specified, check that the fee rate of the payjoin transaction is not less than this value.
       if (
-        (_g = this.payjoinParameters) === null || _g === void 0
+        (_h = this.payjoinParameters) === null || _h === void 0
           ? void 0
-          : _g.minimumFeeRate
+          : _h.minimumFeeRate
       ) {
         let newFeeRate;
         try {
           newFeeRate = payjoinPsbt.getFeeRate();
-        } catch (_j) {
+        } catch (_k) {
           throw new Error(
             'The payjoin receiver did not included UTXO information to calculate fee correctly',
           );
         }
         if (
           newFeeRate <
-          ((_h = this.payjoinParameters) === null || _h === void 0
+          ((_j = this.payjoinParameters) === null || _j === void 0
             ? void 0
-            : _h.minimumFeeRate)
+            : _j.minimumFeeRate)
         )
           throw new Error(
             'The payjoin receiver created a payjoin with a too low fee rate',
