@@ -29,6 +29,6 @@ module.exports = {
     './jest-setup.js'
   ],
   collectCoverageFrom: ['ts_src/**/*.ts', '!**/node_modules/**'],
-  coverageReporters: ['lcov', 'text'],
+  coverageReporters: ['lcov', 'text', 'html'],
   verbose: true,
 };

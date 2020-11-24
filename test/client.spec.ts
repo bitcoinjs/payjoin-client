@@ -5,37 +5,97 @@ import {
 } from '../ts_src/index';
 import * as bitcoin from 'bitcoinjs-lib';
 import { default as VECTORS } from './fixtures/client.fixtures';
+import { getEndpointUrl } from '../ts_src/utils';
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
-
-const p2shp2wpkhOutputScript = (pubkey: Buffer) =>
-  bitcoin.payments.p2sh({
-    redeem: bitcoin.payments.p2wpkh({ pubkey, network }),
-    network,
-  }).output;
-const p2wpkhOutputScript = (pubkey: Buffer) =>
-  bitcoin.payments.p2wpkh({ pubkey, network }).output;
 
 describe('requestPayjoin', () => {
   it('should exist', () => {
     expect(PayjoinClient).toBeDefined();
     expect(typeof PayjoinClient).toBe('function'); // JS classes are functions
   });
+
+  it('should throw on invalid opts', () => {
+    expect(() => {
+      new PayjoinClient(null as any);
+    }).toThrow();
+    expect(() => {
+      new PayjoinClient({
+        payjoinUrl: 'hello',
+        wallet: new TestWallet(null as any, null as any),
+        paymentScript: null as any,
+      });
+    }).toThrow();
+    expect(() => {
+      new PayjoinClient({
+        payjoinUrl: null as any,
+        wallet: new TestWallet(null as any, null as any),
+        paymentScript: Buffer.from('chocolate', 'hex'),
+      });
+    }).toThrow();
+  });
+  expect(() => {
+    new PayjoinClient({
+      payjoinRequester: null as any,
+      wallet: new TestWallet(null as any, null as any),
+      paymentScript: Buffer.from('chocolate', 'hex'),
+    });
+  }).toThrow();
+
   VECTORS.valid.forEach((f) => {
     it('should request p2sh-p2wpkh payjoin', async () => {
-      await testPayjoin(f.p2shp2wpkh, p2shp2wpkhOutputScript);
+      let paymentScript = Buffer.from(
+        'a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87',
+        'hex',
+      );
+      await testPayjoin(f.p2shp2wpkh, () => {
+        return paymentScript;
+      });
     });
     it('should request p2wpkh payjoin', async () => {
-      await testPayjoin(f.p2wpkh, p2wpkhOutputScript);
+      let paymentScript = Buffer.from(
+        'a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87',
+        'hex',
+      );
+      await testPayjoin(f.p2wpkh, () => {
+        return paymentScript;
+      });
     });
   });
   VECTORS.invalid.forEach((f) => {
     it(f.description, async () => {
-      await expect(testPayjoin(f.vector, () => {})).rejects.toThrowError(
-        new RegExp(f.exception),
+      let paymentScript = Buffer.from(
+        'a91457f78d3d696767f4d6d1c8ac5986babad244ed6f87',
+        'hex',
       );
+      await expect(
+        testPayjoin(f.vector, () => {
+          return paymentScript;
+        }),
+      ).rejects.toThrowError(new RegExp(f.exception));
     });
+  });
+});
+
+describe('getEndpointUrl', () => {
+  it('should exist', () => {
+    expect(typeof getEndpointUrl).toBe('function');
+  });
+  it('should add parameters specified', () => {
+    expect(
+      getEndpointUrl('https://gozo.com', {
+        additionalFeeOutputIndex: 0,
+        disableOutputSubstitution: false,
+        minimumFeeRate: 1,
+        payjoinVersion: 2,
+        maxAdditionalFeeContribution: 2,
+      }),
+    ).toBe(
+      'https://gozo.com/?disableoutputsubstitution=false&v=2&minfeerate=1&maxadditionalfeecontribution=2&additionalfeeoutputindex=0',
+    );
+
+    expect(getEndpointUrl('https://gozo.com', {})).toBe('https://gozo.com');
   });
 });
 
@@ -44,11 +104,13 @@ async function testPayjoin(
   getOutputScript: Function,
 ): Promise<void> {
   const rootNode = bitcoin.bip32.fromBase58(VECTORS.privateRoot, network);
-  const wallet = new TestWallet(vector.wallet, rootNode, getOutputScript);
+  const wallet = new TestWallet(vector.wallet, rootNode);
   const payjoinRequester = new DummyRequester(vector.payjoin);
   const client = new PayjoinClient({
     wallet,
     payjoinRequester,
+    paymentScript: getOutputScript(),
+    payjoinParameters: vector.payjoinParameters,
   });
 
   await client.run();
@@ -65,7 +127,6 @@ class TestWallet implements IPayjoinClientWallet {
   constructor(
     private psbtString: string,
     private rootNode: bitcoin.BIP32Interface,
-    private getOutputScript: Function,
   ) {}
 
   async getPsbt() {
@@ -91,16 +152,6 @@ class TestWallet implements IPayjoinClientWallet {
 
   async scheduleBroadcastTx(txHex: string, ms: number): Promise<void> {
     return txHex + ms + 'x' ? undefined : undefined;
-  }
-
-  async isOwnOutputScript(
-    script: Buffer,
-    pathFromRoot?: string,
-  ): Promise<boolean> {
-    if (!pathFromRoot) return false;
-    const { publicKey } = this.rootNode.derivePath(pathFromRoot);
-    const ourScript = this.getOutputScript(publicKey);
-    return script.equals(ourScript);
   }
 }
 

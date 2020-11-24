@@ -15,22 +15,13 @@ export default {
         wallet:
           'cHNidP8BAHECAAAAAcG1DqRm0b8vhX6JpsU3m2N8V6xVz226gjY+pE7up8ebAAAAAAD/////AhY3AAAAAAAAFgAUn1AUWTvX0DxQkFIeS+rmPrPMvBrazjABAAAAABYAFD4WR6SuL+LmgQYyQeDKe7e53H2FAAAAAAABAR8ALTEBAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIA5rthangBAiievrSBxLjaY84rH0rTQWtLZZgjJXmCNwAiBfahFoEsKJIpYNT6gLpgnz4Kd5tfhwxVu4suC3JtYDRwEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAACICAnV5cU7BjADcEOOyGq9mFwih6VX/4pXpJdKCxY/szjOXGL2ZyQNUAACAAQAAgAAAAIABAAAAAAAAAAA=',
         payjoin:
-          'cHNidP8BAJoCAAAAAsG1DqRm0b8vhX6JpsU3m2N8V6xVz226gjY+pE7up8ebAAAAAAD/////r0UF7k4QIg7eU5xF5s+hAqE7Jfd6sipD1Yd8va6VK7AAAAAAAP////8CBLwwAQAAAAAWABQ+Fkekri/i5oEGMkHgynu3udx9hbhwzAAAAAAAFgAUn1AUWTvX0DxQkFIeS+rmPrPMvBoAAAAAAAABAR+iOcwAAAAAABYAFCZkjLYCTqSilHNgvSXmFJo2FwJAAQhrAkcwRAIgSrvgI38Qc1LQbeJHuGstnmAxKa0r1vs0HEaXV/l9lDACIGY3HXTY3OI/k1qJwKsR5xAdm0xisOIH7ExKDieGM3f8ASECW3pZhcq0tRXPiM7jLITLeCetYq48ElvgytyaUpGrvR0AAAA=',
+          'cHNidP8BAHECAAAAAcG1DqRm0b8vhX6JpsU3m2N8V6xVz226gjY+pE7up8ebAAAAAAD/////AhY3AAAAAAAAFgAUn1AUWTvX0DxQkFIeS+rmPrPMvBrazjABAAAAABYAFD4WR6SuL+LmgQYyQeDKe7e53H2FAAAAAAAAAAA=',
         finaltx:
-          '02000000000102c1b50ea466d1bf2f857e89a6c5379b637c57ac55cf6dba82363ea44eeea7c79b0000000000ffffffffaf4505ee4e10220ede539c45e6cfa102a13b25f77ab22a43d5877cbdae952bb00000000000ffffffff0204bc3001000000001600143e1647a4ae2fe2e681063241e0ca7bb7b9dc7d85b870cc00000000001600149f5014593bd7d03c5090521e4beae63eb3ccbc1a0247304402205b63aba308d01cc9420744527edb07ff1c26c3335539784a3f6c022d7df61e51022018c6f1637eedc99ea95cd2000936ecd4bc5e177b5be12afa5863bb4094e0ab59012102cfd1c766a2db1c80cd0c895a7962575e17e28ffbaee5fa48a1744390809dfc800247304402204abbe0237f107352d06de247b86b2d9e603129ad2bd6fb341c469757f97d9430022066371d74d8dce23f935a89c0ab11e7101d9b4c62b0e207ec4c4a0e27863377fc0121025b7a5985cab4b515cf88cee32c84cb7827ad62ae3c125be0cadc9a5291abbd1d00000000',
+          '02000000000101c1b50ea466d1bf2f857e89a6c5379b637c57ac55cf6dba82363ea44eeea7c79b0000000000ffffffff0216370000000000001600149f5014593bd7d03c5090521e4beae63eb3ccbc1adace3001000000001600143e1647a4ae2fe2e681063241e0ca7bb7b9dc7d850247304402200e6bb616a780102289ebeb481c4b8da63ce2b1f4ad3416b4b65982325798237002205f6a116812c28922960d4fa80ba609f3e0a779b5f870c55bb8b2e0b726d60347012102cfd1c766a2db1c80cd0c895a7962575e17e28ffbaee5fa48a1744390809dfc8000000000',
       },
     },
   ],
   invalid: [
-    {
-      description: 'should throw when input is wrong type',
-      exception:
-        'Inputs used do not support payjoin, they must be segwit \\(p2wpkh or p2sh-p2wpkh\\)',
-      vector: {
-        wallet:
-          'cHNidP8BAFUCAAAAARjxDP3puQxJ0a3RWQ95ciPPi+V2jZgZb/NuHV93KZ+wAAAAAAD/////AUQLAQAAAAAAGXapFL2ZyQMv/In1PSScRofmzbEatoddiKwAAAAAAAEAwAIAAAABf4FPD7V9reV6et8EcC8IHyUPnNdazWDZds5QNGbC95ABAAAAa0gwRQIhAPJ8LolgdP+68jLc2ijj8w5B44Ue6esWbH4gPFvVFhkUAiA3XC7eb5+x0NfDBbK0UAz7CngGv9FZ7uA9ipO9LCptnAEhA6SNzVPHrx8ylDHvD2Jv8wdRpQJZ7fGljNhKSJSBaiGX/////wEsDwEAAAAAABl2qRS9mckDL/yJ9T0knEaH5s2xGraHXYisAAAAACICAq91A34xjfh7oaDkCBF5GPpZJv0EyyHt9fflPYb3kdVtRzBEAiAQBWcXLHA1k+tm40C+IJnQ3ZgRfoCMkdLYsgvaGYiVagIgfFhmsgSKJqOS0TxGRKQvfnFIoxXaxKREDY4NKm4t0wMBAAA=',
-      },
-    },
     {
       description: 'should throw when input is missing utxo info',
       exception:
@@ -60,8 +51,7 @@ export default {
     },
     {
       description: 'should throw when payjoin has bip32Derivation',
-      exception:
-        "Keypath information should not be included in the receiver's PSBT",
+      exception: 'The receiver added keypaths to an input',
       vector: {
         wallet:
           'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
@@ -70,8 +60,38 @@ export default {
       },
     },
     {
+      description: 'should throw when payjoin inputs are not finalized',
+      exception: 'The receiver did not finalized one of their input',
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAAdoRvMcqH3uh2NVL2FGlJxHL/8N4DIgRXLG8CeiP7UHNAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAA==',
+      },
+    },
+    {
       description: 'should throw when payjoin missing input from original',
-      exception: "Receiver's PSBT is missing input #0 from the sent PSBT",
+      exception: 'Some of our inputs are not included in the proposal',
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAAZQTn0SZJ4jQU9ffYKpQVXPhQ28ZeMDiVwlJl94sP2YpAQAAAAD+////AeiNmAAAAAAAFgAUVExGfhpW/FSj7sXOI3YrpmZfTSMAAAAAAAEBH4CWmAAAAAAAFgAU/kC6lobM4Cr95VC5+03qgrrWProBCGsCRzBEAiBMoR0WxtAxFRgG0cP2xaMyaBufIcRDmKxNLIuBFCwVSwIgRNbAk9kOTMOJROczrO/xPYRKh2/EHLWN1lWVrXBv7nIBIQIJupfWvPpkDGcFAM0YL+fhV7cCaDwxW7vi5kOmjCd71QAA',
+      },
+    },
+    {
+      description: 'should throw when payjoin added keypaths to an input',
+      exception: 'The receiver added keypaths to an input',
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
+        payjoin:
+          'cHNidP8BAFICAAAAAZQTn0SZJ4jQU9ffYKpQVXPhQ28ZeMDiVwlJl94sP2YpAQAAAAD+////AeiNmAAAAAAAFgAUVExGfhpW/FSj7sXOI3YrpmZfTSMAAAAAAAEBH4CWmAAAAAAAFgAU/kC6lobM4Cr95VC5+03qgrrWProiAgIJupfWvPpkDGcFAM0YL+fhV7cCaDwxW7vi5kOmjCd71UcwRAIgTKEdFsbQMRUYBtHD9sWjMmgbnyHEQ5isTSyLgRQsFUsCIETWwJPZDkzDiUTnM6zv8T2ESodvxBy1jdZVla1wb+5yASIGAgm6l9a8+mQMZwUAzRgv5+FXtwJoPDFbu+LmQ6aMJ3vVGETuV4tUAACAAQAAgAAAAIAAAAAAAAAAAAAA',
+      },
+    },
+    {
+      description: 'should throw when payjoin has partial signatures present',
+      exception: 'The receiver added partial signatures to an input',
       vector: {
         wallet:
           'cHNidP8BAFICAAAAAWclrsbhiD7G1ypleYAen/8KTO2pBB+hFRpUyCfyKSDCAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhAL91FJzmGIV9GDY13Fvr5812i19/hSN0IoSkocRDwwOrAiAPJIE0ct0CJOxb24SEV+YrJr76wsaYmQ9My6OLSD8yLgEAAA==',
@@ -81,12 +101,115 @@ export default {
     },
     {
       description: 'should throw when payjoin has different input sequence',
-      exception: 'Input #0 from original PSBT have a different sequence',
+      exception: 'The proposedTxIn modified the sequence of one of our inputs',
       vector: {
         wallet:
           'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
         payjoin:
-          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAAqAAAAAUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
+          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAArAAAAAUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAA==',
+      },
+    },
+    {
+      description: 'should throw when payjoin has different nLockTime',
+      exception: 'The proposal PSBT changed the nLocktime',
+      vector: {
+        wallet:
+          'cHNidP8BAFICAAAAARXVCcnqz+xMne9ayS0AbP/UFjcnr3ErQLAYC9wsQkzZAAAAAAD/////AUQLAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10AAAAAAAEBHywPAQAAAAAAFgAUvZnJAy/8ifU9JJxGh+bNsRq2h10iAgKvdQN+MY34e6Gg5AgReRj6WSb9BMsh7fX35T2G95HVbUgwRQIhALJwmOi45bjKatYtZo+fsUHPCwnXEQ5qrVnE1N2wvo3FAiBracRPjzVOe0jHw76C0sBojCUYcs08zIrVR/go5ULd2gEAAA==',
+        payjoin:
+          'cHNidP8BAHsCAAAAAqSCiksvmJUL963/NgDSBhibUnDqVAtgm48UWSxOdL6EAQAAAAD+////lBOfRJkniNBT199gqlBVc+FDbxl4wOJXCUmX3iw/ZikBAAAAAP7///8BGB8xAQAAAAAWABRIhkLjS/4LcoMWd3zupipsfdeS7HoAAAAAAQEfgJaYAAAAAAAWABT+QLqWhszgKv3lULn7TeqCutY+uiICAgm6l9a8+mQMZwUAzRgv5+FXtwJoPDFbu+LmQ6aMJ3vVRzBEAiB9yopTP4tIEcfJDmSn7p0vCLM8d/42OuWCBiqg3O8dMgIgV8X5QDYeYCB+fH4sZ5DCZ5QSUJ4idA0elFQGDttOEjwBIgYCCbqX1rz6ZAxnBQDNGC/n4Ve3Amg8MVu74uZDpowne9UYRO5Xi1QAAIABAACAAAAAgAAAAAAAAAAAAAEBH4CWmAAAAAAAFgAU/kC6lobM4Cr95VC5+03qgrrWProiAgIJupfWvPpkDGcFAM0YL+fhV7cCaDwxW7vi5kOmjCd71UcwRAIgEw9i1NTJ0PptiYTqdUavsVvVY7R4T2RsWKjAfj6yNZkCIHqDAwzV6l0eTBl+htf4zn1R5GkhGHQ018D8VNEcXUr2ASIGAgm6l9a8+mQMZwUAzRgv5+FXtwJoPDFbu+LmQ6aMJ3vVGETuV4tUAACAAQAAgAAAAIAAAAAAAAAAAAAiAgNZ3Ot63WttT2Pod8hylGoc074qjngSx9LJL8mS7W3lRhhE7leLVAAAgAEAAIAAAACAAAAAAAEAAAAA',
+      },
+    },
+    {
+      description: 'should throw when payjoin has different input types',
+      exception: 'Mixed input type detected in the proposal',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFONQBGx03T9bz9kmvEoDdPFjY4iRiKxAS0wAAAAAABYAFAHoCVYyWtVdTEcbjYfN+dzJ+GX3AAAAAAABAR+AlpgAAAAAABYAFOlXF71lgFhD/WTKdNnx9liQGA+9IgID0hCdac2QMmzHfx76SdCANa4VNCt3frNDtkhq2Honyk5HMEQCIEtLN4/z77uL/KXVaxAo1LoMSawyE/ya46QUH4ZJofFwAiB7f5adSJOZCoJiwuBsnvWObzkyaRldXH9aaniLpmFS4wEAAAA=',
+        payjoin:
+          'cHNidP8BAJ0BAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8CoMRKAAAAAAAZdqkU41AEbHTdP1vP2Sa8SgN08WNjiJGIrMDh5AAAAAAAFgAUAegJVjJa1V1MRxuNh8353Mn4ZfcAAAAAAAEBIICWmAAAAAAAF6kU3rLzgQoeMxcU1ksMMxGnbMV0DtWHAQcXFgAU9D2mwhVdkB3MY6chPX2mPYY54qUBCGsCRzBEAiATummnyTLa1+kuhM+7aanRWqgDw0kXnH+ZhRAiqCNlAAIgPqWp0z+Tri/3N+8GP4dbjhvRThMWaMXzH+annoTOuZYBIQKx25cZrTPhr0agKk1FQm0QLCt329vGd2WJ8Ym8R+bbewABAR+AlpgAAAAAABYAFOlXF71lgFhD/WTKdNnx9liQGA+9AAAA',
+      },
+    },
+    {
+      description:
+        'should throw when payjoin receiver tries to remove some sender (non-payment) outputs',
+      exception: 'Some of our outputs are not included in the proposal',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKxAS0wAAAAAABYAFAHoCVYyWtVdTEcbjYfN+dzJ+GX3AAAAAAABAR+AlpgAAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIHLzFo+ECpsGc+Ykr72GoHcCty8A8aIMTCetpFn19rtxAiB9q3ci7+YJnDIe6hfzlXJMdKLxFzuV/4ivt1mokSJJ7wEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAAAA=',
+        payjoin:
+          'cHNidP8BAHsBAAAAAgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8BYKYvAQAAAAAWABQB6AlWMlrVXUxHG42Hzfncyfhl9wAAAAAAAAEBH4CWmAAAAAAAFgAU9D2mwhVdkB3MY6chPX2mPYY54qUBCGsCRzBEAiAZzWgECSMGzov3q2B2xlRY30B07rIz26UD5rkhovyIkQIgQ93cfTPxN16NMsIFlq+mmIxTgIAn4GuH2ZC/VsVL/K8BIQKx25cZrTPhr0agKk1FQm0QLCt329vGd2WJ8Ym8R+bbewAA',
+      },
+    },
+    {
+      description:
+        'should throw when payjoin receiver tries to take too much money',
+      exception: 'The receiver decreased the value of one of the outputs',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKxAS0wAAAAAABYAFAHoCVYyWtVdTEcbjYfN+dzJ+GX3AAAAAAABAR+AlpgAAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIHLzFo+ECpsGc+Ykr72GoHcCty8A8aIMTCetpFn19rtxAiB9q3ci7+YJnDIe6hfzlXJMdKLxFzuV/4ivt1mokSJJ7wEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAAAA=',
+        payjoin:
+          'cHNidP8BAJ0BAAAAAgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8CIEAsAAAAAAAZdqkU3MHGzg3ngvHZnhOyVSixUD7NMrOIrEBmAwEAAAAAFgAUAegJVjJa1V1MRxuNh8353Mn4ZfcAAAAAAAABAR+AlpgAAAAAABYAFPQ9psIVXZAdzGOnIT19pj2GOeKlAQhrAkcwRAIgQTUvD9UCrSBh9n2TRzjJr8+eknM1oPo9VrH5Gdc1rLICIGsS+6wGqZZM7VayM8+0uPBMubznFVv9413Q7rLMGLGJASECsduXGa0z4a9GoCpNRUJtECwrd9vbxndlifGJvEfm23sAAAA=',
+      },
+    },
+    {
+      description:
+        'should throw when payjoin receiver does output substitution when it is disabled',
+      exception: 'Some of our outputs are not included in the proposal',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKxAS0wAAAAAABYAFAHoCVYyWtVdTEcbjYfN+dzJ+GX3AAAAAAABAR+AlpgAAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIHLzFo+ECpsGc+Ykr72GoHcCty8A8aIMTCetpFn19rtxAiB9q3ci7+YJnDIe6hfzlXJMdKLxFzuV/4ivt1mokSJJ7wEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAAAA=',
+        payjoin:
+          'cHNidP8BAJ0BAAAAAgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8CoMRKAAAAAAAZdqkU3MHGzg3ngvHZnhOyVSixUD7NMrOIrMDh5AAAAAAAFgAUKX9b+7pqrYlgJUboI/w+WsYsRRIAAAAAAAABAR+AlpgAAAAAABYAFPQ9psIVXZAdzGOnIT19pj2GOeKlAQhrAkcwRAIgEPU8eUcvfPMcyXKnpQOGO/AstI1JOz0x3yY6iNzO7eoCIHBtMcIbd2Mwe+8uIOPLX6yIrSYRW7tDC+1iRK+zC9PZASECsduXGa0z4a9GoCpNRUJtECwrd9vbxndlifGJvEfm23sAAAA=',
+        payjoinParameters: {
+          disableOutputSubstitution: true,
+        },
+      },
+    },
+    {
+      description:
+        'should throw when payjoin receiver tries to make sender pay a higher fee than is willing to',
+      exception:
+        'The actual contribution is more than maxadditionalfeecontribution',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKxAS0wAAAAAABYAFJ9QFFk719A8UJBSHkvq5j6zzLwaAAAAAAABAR+AlpgAAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIG8qLKN65ly5s95nXDui5aN8OtwNmyWrbawpBxEIXZ9pAiALjxjtUUBNB5PUj+OuyS5+dj2iPBoj36GV/n/MN4k4ywEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAAAA=',
+        payjoin:
+          'cHNidP8BAJ0BAAAAAgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8CAD5JAAAAAAAZdqkU3MHGzg3ngvHZnhOyVSixUD7NMrOIrMDh5AAAAAAAFgAUn1AUWTvX0DxQkFIeS+rmPrPMvBoAAAAAAAABAR+AlpgAAAAAABYAFPQ9psIVXZAdzGOnIT19pj2GOeKlAQhrAkcwRAIgXVBfmTYLi419xjGzKgvrFpTUX20rRE+kvOw9niGjQeQCIAFYRFq89zCMMqdGPX1e8GSd41PVz7mvycQkFj+GJHHDASECsduXGa0z4a9GoCpNRUJtECwrd9vbxndlifGJvEfm23sAAAA=',
+        payjoinParameters: {
+          maxAdditionalFeeContribution: 1,
+          additionalFeeOutputIndex: 0,
+        },
+      },
+    },
+    {
+      description:
+        'should throw when payjoin receiver tries to exploit maxadditionalfeecontribution to get more money instead of just paying for fees ',
+      exception: 'The actual contribution is not only paying fee',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKxAS0wAAAAAABYAFJ9QFFk719A8UJBSHkvq5j6zzLwaAAAAAAABAR+AlpgAAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIG8qLKN65ly5s95nXDui5aN8OtwNmyWrbawpBxEIXZ9pAiALjxjtUUBNB5PUj+OuyS5+dj2iPBoj36GV/n/MN4k4ywEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAAAA=',
+        payjoin:
+          'cHNidP8BAJ0BAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8CkJ1KAAAAAAAZdqkU3MHGzg3ngvHZnhOyVSixUD7NMrOIrNAI5QAAAAAAFgAUn1AUWTvX0DxQkFIeS+rmPrPMvBoAAAAAAAEBH4CWmAAAAAAAFgAU9D2mwhVdkB3MY6chPX2mPYY54qUBCGsCRzBEAiA0hj3RVv/eMDUo0ZtMQun3Q3kIqwVGjqaFauBHXs8s0wIgC6bvt8r4WbMIK068q4TTZrvQ6OXHR8vA18erDzfcfa0BIQKx25cZrTPhr0agKk1FQm0QLCt329vGd2WJ8Ym8R+bbewAAAAA=',
+        payjoinParameters: {
+          maxAdditionalFeeContribution: 10000000,
+          additionalFeeOutputIndex: 0,
+        },
+      },
+    },
+    {
+      description:
+        'should throw when payjoin receiver tries to make the sender pay a higher fee rate',
+      exception:
+        'The actual contribution is not only paying for additional inputs',
+      vector: {
+        wallet:
+          'cHNidP8BAHQBAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AqDESgAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKxAS0wAAAAAABYAFJ9QFFk719A8UJBSHkvq5j6zzLwaAAAAAAABAR+AlpgAAAAAABYAFH+Ar5fIkaBhnFoV+l63h8a3ieXNIgICz9HHZqLbHIDNDIlaeWJXXhfij/uu5fpIoXRDkICd/IBHMEQCIG8qLKN65ly5s95nXDui5aN8OtwNmyWrbawpBxEIXZ9pAiALjxjtUUBNB5PUj+OuyS5+dj2iPBoj36GV/n/MN4k4ywEiBgLP0cdmotscgM0MiVp5YldeF+KP+67l+kihdEOQgJ38gBi9mckDVAAAgAEAAIAAAACAAAAAAAAAAAAAAAA=',
+        payjoin:
+          'cHNidP8BAJ0BAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8CwOHkAAAAAAAWABSfUBRZO9fQPFCQUh5L6uY+s8y8GgAJPQAAAAAAGXapFNzBxs4N54Lx2Z4TslUosVA+zTKziKwAAAAAAAEBH4CWmAAAAAAAFgAU9D2mwhVdkB3MY6chPX2mPYY54qUBCGsCRzBEAiBYZhe1Sl4BN3JZpYPSXwJcpklfW6r4ZhtfFeSQRmSXlwIgS0rw/TrM//f/RL+LPqAVCxk0BY0bynwalc1ab/gPm08BIQKx25cZrTPhr0agKk1FQm0QLCt329vGd2WJ8Ym8R+bbewAAAAA=',
+        payjoinParameters: {
+          maxAdditionalFeeContribution: 10000000,
+          additionalFeeOutputIndex: 0,
+        },
       },
     },
   ],

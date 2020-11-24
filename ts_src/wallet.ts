@@ -47,15 +47,4 @@ export interface IPayjoinClientWallet {
    * via setTimeout etc. (Do not wait until the broadcast occurs to return)
    */
   scheduleBroadcastTx(txHex: string, milliSeconds: number): Promise<void>;
-  /**
-   * @async
-   * This accepts a script and optionally a BIP32 derivation path and returns a
-   * boolean depending on whether or not the wallet owns this output script.
-   *
-   * @param {script} Buffer - An output script buffer.
-   * @param {pathFromRoot} string - A BIP32 derivation path.
-   * @return {boolean} A boolean depending on whether or not the wallet owns
-   * this output script.
-   */
-  isOwnOutputScript(script: Buffer, pathFromRoot?: string): Promise<boolean>;
 }
