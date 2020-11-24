@@ -1,6 +1,6 @@
 {
   "name": "payjoin-client",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A BIP78 Payjoin Client Library in JS with TypeScript types",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
