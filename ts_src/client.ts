@@ -236,13 +236,17 @@ export class PayjoinClient {
         if (hasKeypathInformationSet(proposedPSBTOutput))
           throw new Error('The receiver added keypaths to an output');
 
-        const isOriginalOutput =
-          originalOutputs.length > 0 &&
-          originalOutputs[0].originalTxOut.script.equals(
-            payjoinPsbt.txOutputs[i].script,
-          );
-        if (isOriginalOutput) {
-          const originalOutput = originalOutputs.splice(0, 1)[0];
+        if (originalOutputs.length === 0) continue;
+        const originalOutput = originalOutputs[0];
+        const isOriginalOutput = originalOutput.originalTxOut.script.equals(
+          payjoinPsbt.txOutputs[i].script,
+        );
+        const substitutedOutput =
+          !isOriginalOutput &&
+          allowOutputSubstitution &&
+          originalOutput.originalTxOut.script.equals(this.paymentScript);
+        if (isOriginalOutput || substitutedOutput) {
+          originalOutputs.splice(0, 1);
           if (
             feeOutput &&
             originalOutput.index ===
