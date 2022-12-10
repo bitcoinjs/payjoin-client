@@ -29,7 +29,10 @@
     "src"
   ],
   "dependencies": {
-    "bitcoinjs-lib": "^5.2.0"
+    "bip32": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.0",
+    "ecpair": "^2.1.0",
+    "tiny-secp256k1": "^2.2.1"
   },
   "devDependencies": {
     "@types/isomorphic-fetch": "0.0.35",

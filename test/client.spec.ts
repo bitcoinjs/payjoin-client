@@ -6,6 +6,8 @@ import {
 import * as bitcoin from 'bitcoinjs-lib';
 import { default as VECTORS } from './fixtures/client.fixtures';
 import { getEndpointUrl } from '../ts_src/utils';
+import { BIP32Factory, BIP32Interface } from 'bip32';
+import * as ecc from 'tiny-secp256k1';
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
@@ -103,7 +105,7 @@ async function testPayjoin(
   vector: any,
   getOutputScript: Function,
 ): Promise<void> {
-  const rootNode = bitcoin.bip32.fromBase58(VECTORS.privateRoot, network);
+  const rootNode = BIP32Factory(ecc).fromBase58(VECTORS.privateRoot, network);
   const wallet = new TestWallet(vector.wallet, rootNode);
   const payjoinRequester = new DummyRequester(vector.payjoin);
   const client = new PayjoinClient({
@@ -124,10 +126,7 @@ class TestWallet implements IPayjoinClientWallet {
   tx: bitcoin.Transaction | undefined;
   timeout: NodeJS.Timeout | undefined;
 
-  constructor(
-    private psbtString: string,
-    private rootNode: bitcoin.BIP32Interface,
-  ) {}
+  constructor(private psbtString: string, private rootNode: BIP32Interface) {}
 
   async getPsbt() {
     return bitcoin.Psbt.fromBase64(this.psbtString, { network });

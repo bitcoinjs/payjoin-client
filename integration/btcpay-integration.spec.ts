@@ -4,6 +4,11 @@ import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
 import * as fetch from 'isomorphic-fetch';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as qs from 'querystring';
+import { BIP32Factory, BIP32Interface } from 'bip32';
+import * as ecc from 'tiny-secp256k1';
+import { ECPairFactory } from 'ecpair';
+
+const ECPair = ECPairFactory(ecc);
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
@@ -69,7 +74,7 @@ async function testPayjoin(
   const wallet = new TestWallet(
     invoice.bitcoinAddress,
     Math.round(parseFloat(invoice.btcPrice) * 1e8),
-    bitcoin.bip32.fromSeed(bitcoin.ECPair.makeRandom().privateKey!, network),
+    BIP32Factory(ecc).fromSeed(ECPair.makeRandom().privateKey!, network),
     scriptType,
   );
   const client = new PayjoinClient({
@@ -116,7 +121,7 @@ class TestWallet implements IPayjoinClientWallet {
   constructor(
     private sendToAddress: string,
     private sendToAmount: number,
-    private rootNode: bitcoin.BIP32Interface,
+    private rootNode: BIP32Interface,
     private scriptType: ScriptType,
   ) {}
 
