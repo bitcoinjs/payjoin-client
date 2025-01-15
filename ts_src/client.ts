@@ -157,11 +157,6 @@ export class PayjoinClient {
           // Verify the PSBT input is not finalized
           if (isFinalized(proposedPSBTInput))
             throw new Error('The receiver finalized one of our inputs');
-          // Verify that <code>non_witness_utxo</code> and <code>witness_utxo</code> are not specified.
-          if (proposedPSBTInput.nonWitnessUtxo || proposedPSBTInput.witnessUtxo)
-            throw new Error(
-              'The receiver added non_witness_utxo or witness_utxo to one of our inputs',
-            );
           if (proposedTxIn.sequence != null) {
             sequences.add(proposedTxIn.sequence);
           }
