@@ -1,12 +1,15 @@
 import { IPayjoinClientWallet, PayjoinClient } from '..';
 import { RegtestUtils } from 'regtest-client';
 import { BTCPayClient, crypto as btcPayCrypto } from 'btcpay';
-import * as fetch from 'isomorphic-fetch';
 import * as bitcoin from 'bitcoinjs-lib';
+import { BIP32Factory, BIP32Interface } from 'bip32';
+import { randomBytes } from 'crypto';
+import * as ecc from 'tiny-secp256k1';
 import * as qs from 'querystring';
 
 // pass the regtest network to everything
 const network = bitcoin.networks.regtest;
+const bip32 = BIP32Factory(ecc);
 
 const TOKENURL = 'http://127.0.0.1:18271/tokens';
 
@@ -23,9 +26,11 @@ let btcPayClientSegwitP2SH: BTCPayClient;
 // # run the following docker command and wait 10 seconds before running tests
 // docker run -p 49392:49392 -p 8080:8080 -p 18271:18271 junderw/btcpay-client-test-server
 
+// faucet + payjoin round trips take a while on the emulated test server
+jest.setTimeout(60000);
+
 describe('requestPayjoin', () => {
   beforeAll(async () => {
-    jest.setTimeout(20000);
     regtestUtils = new RegtestUtils({ APIURL, APIPASS });
 
     const tokens = await getTokens();
@@ -57,8 +62,9 @@ async function testPayjoin(
   scriptType: ScriptType,
 ): Promise<void> {
   const invoice = await btcPayClient.create_invoice({
-    currency: 'USD',
-    price: 1.12,
+    // priced in BTC: a fiat invoice needs a rate feed the test server image cannot reach
+    currency: 'BTC',
+    price: 0.0001,
   });
   const qsVars = qs.decode(invoice.paymentUrls.BIP21 as string);
   const pjEndpoint = qsVars.pj as string;
@@ -69,7 +75,7 @@ async function testPayjoin(
   const wallet = new TestWallet(
     invoice.bitcoinAddress,
     Math.round(parseFloat(invoice.btcPrice) * 1e8),
-    bitcoin.bip32.fromSeed(bitcoin.ECPair.makeRandom().privateKey!, network),
+    bip32.fromSeed(randomBytes(32), network),
     scriptType,
   );
   const client = new PayjoinClient({
@@ -88,7 +94,7 @@ async function testPayjoin(
       network,
     ),
     vout: 1,
-    value: wallet.tx!.outs[1].value,
+    value: Number(wallet.tx!.outs[1].value),
   });
 }
 
@@ -116,7 +122,7 @@ class TestWallet implements IPayjoinClientWallet {
   constructor(
     private sendToAddress: string,
     private sendToAmount: number,
-    private rootNode: bitcoin.BIP32Interface,
+    private rootNode: BIP32Interface,
     private scriptType: ScriptType,
   ) {}
 
@@ -142,7 +148,7 @@ class TestWallet implements IPayjoinClientWallet {
         index: unspent.vout,
         witnessUtxo: {
           script: firstKeypayment.output!,
-          value: unspent.value,
+          value: BigInt(unspent.value),
         },
         bip32Derivation: [
           {
@@ -157,11 +163,11 @@ class TestWallet implements IPayjoinClientWallet {
       })
       .addOutput({
         address: this.sendToAddress,
-        value: sendAmount,
+        value: BigInt(sendAmount),
       })
       .addOutput({
         address: firstChangepayment.address!,
-        value: unspent.value - sendAmount - 10000,
+        value: BigInt(unspent.value - sendAmount - 10000),
         bip32Derivation: [
           {
             pubkey: firstChangeNode.publicKey,
@@ -190,7 +196,7 @@ class TestWallet implements IPayjoinClientWallet {
       await regtestUtils.broadcast(txHex);
       this.tx = bitcoin.Transaction.fromHex(txHex);
     } catch (e) {
-      return e.message;
+      return (e as Error).message;
     }
     return '';
   }
@@ -219,7 +225,10 @@ class TestWallet implements IPayjoinClientWallet {
     clearTimeout(this.timeout);
   }
 
-  private getPayment(pubkey: Buffer, scriptType: ScriptType): bitcoin.Payment {
+  private getPayment(
+    pubkey: Uint8Array,
+    scriptType: ScriptType,
+  ): bitcoin.Payment {
     if (scriptType === 'p2wpkh') {
       return bitcoin.payments.p2wpkh({
         pubkey,

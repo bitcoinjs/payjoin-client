@@ -15,7 +15,7 @@ module.exports = {
     '^.+\\.ts$': 'ts-jest',
   },
   testRegex,
-  testURL: 'http://localhost/',
+  testEnvironmentOptions: { url: 'http://localhost/' },
   testEnvironment: 'node',
   coverageThreshold: {
     global: {

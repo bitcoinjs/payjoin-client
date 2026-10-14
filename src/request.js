@@ -13,15 +13,15 @@ const bitcoinjs_lib_1 = require('bitcoinjs-lib');
  * error codes can still be added in the app.
  */
 class PayjoinEndpointError extends Error {
-  constructor(code) {
-    super(PayjoinEndpointError.codeToMessage(code));
-    this.code = code;
-  }
   static codeToMessage(code) {
     return (
       this.messageMap[code] ||
       'Something went wrong when requesting the payjoin endpoint.'
     );
+  }
+  constructor(code) {
+    super(PayjoinEndpointError.codeToMessage(code));
+    this.code = code;
   }
 }
 exports.PayjoinEndpointError = PayjoinEndpointError;

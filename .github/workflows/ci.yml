@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22, 24, 26]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm install
+      - run: npm test
+
+  gitdiff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run gitdiff:ci
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run coverage
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: docker run -d -p 127.0.0.1:49392:49392 -p 127.0.0.1:8080:8080 -p 127.0.0.1:18271:18271 junderw/btcpay-client-test-server@sha256:2ab65051329e0250cd7d5ff3f3182a95d81228e469b518beb570a288f313e5c1
+      - run: npm install
+      - name: Wait for BTCPay Server
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:18271/tokens > /dev/null && exit 0
+            sleep 5
+          done
+          docker ps -a
+          exit 1
+      - run: npm run integration

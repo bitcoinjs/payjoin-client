@@ -1,5 +1,6 @@
 import { Psbt } from 'bitcoinjs-lib';
-import { Bip32Derivation, PsbtInput } from 'bip174/src/lib/interfaces';
+import { Bip32Derivation, PsbtInput } from 'bip174';
+import { compare } from 'uint8array-tools';
 import { PayjoinClientOptionalParameters } from './client';
 
 export enum ScriptPubKeyType {
@@ -37,7 +38,7 @@ export function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
       'The psbt should be able to be finalized with utxo information',
     );
 
-  const types = new Set();
+  const types = new Set<ScriptPubKeyType>();
 
   for (let i = 0; i < psbt.data.inputs.length; i++) {
     types.add(getInputScriptPubKeyType(psbt, i));
@@ -45,7 +46,7 @@ export function getInputsScriptPubKeyType(psbt: Psbt): ScriptPubKeyType {
 
   if (types.size > 1) throw new Error('Inputs must all be the same type');
 
-  return types.values().next().value;
+  return types.values().next().value!;
 }
 
 export function getInputScriptPubKeyType(
@@ -79,12 +80,12 @@ export function isFinalized(input: PsbtInput): boolean {
 
 export function getInputIndex(
   psbt: Psbt,
-  prevOutHash: Buffer,
+  prevOutHash: Uint8Array,
   prevOutIndex: number,
 ): number {
   for (const [index, input] of psbt.txInputs.entries()) {
     if (
-      Buffer.compare(input.hash, prevOutHash) === 0 &&
+      compare(input.hash, prevOutHash) === 0 &&
       input.index === prevOutIndex
     ) {
       return index;

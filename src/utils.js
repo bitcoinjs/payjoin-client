@@ -1,6 +1,15 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.getEndpointUrl = exports.getVirtualSize = exports.getInputIndex = exports.isFinalized = exports.hasKeypathInformationSet = exports.getInputScriptPubKeyType = exports.getInputsScriptPubKeyType = exports.getFee = exports.ScriptPubKeyType = void 0;
+exports.ScriptPubKeyType = void 0;
+exports.getFee = getFee;
+exports.getInputsScriptPubKeyType = getInputsScriptPubKeyType;
+exports.getInputScriptPubKeyType = getInputScriptPubKeyType;
+exports.hasKeypathInformationSet = hasKeypathInformationSet;
+exports.isFinalized = isFinalized;
+exports.getInputIndex = getInputIndex;
+exports.getVirtualSize = getVirtualSize;
+exports.getEndpointUrl = getEndpointUrl;
+const uint8array_tools_1 = require('uint8array-tools');
 var ScriptPubKeyType;
 (function (ScriptPubKeyType) {
   /// <summary>
@@ -22,14 +31,10 @@ var ScriptPubKeyType;
   /// Use this when you worry that your users do not support Bech address format.
   /// </summary>
   ScriptPubKeyType[(ScriptPubKeyType['SegwitP2SH'] = 3)] = 'SegwitP2SH';
-})(
-  (ScriptPubKeyType =
-    exports.ScriptPubKeyType || (exports.ScriptPubKeyType = {})),
-);
+})(ScriptPubKeyType || (exports.ScriptPubKeyType = ScriptPubKeyType = {}));
 function getFee(feeRate, size) {
   return feeRate * size;
 }
-exports.getFee = getFee;
 function getInputsScriptPubKeyType(psbt) {
   if (
     psbt.data.inputs.filter((i) => !i.witnessUtxo && !i.nonWitnessUtxo).length >
@@ -45,7 +50,6 @@ function getInputsScriptPubKeyType(psbt) {
   if (types.size > 1) throw new Error('Inputs must all be the same type');
   return types.values().next().value;
 }
-exports.getInputsScriptPubKeyType = getInputsScriptPubKeyType;
 function getInputScriptPubKeyType(psbt, i) {
   const type = psbt.getInputType(i);
   switch (type) {
@@ -59,21 +63,18 @@ function getInputScriptPubKeyType(psbt, i) {
       return ScriptPubKeyType.Unsupported;
   }
 }
-exports.getInputScriptPubKeyType = getInputScriptPubKeyType;
 function hasKeypathInformationSet(item) {
   return !!item.bip32Derivation && item.bip32Derivation.length > 0;
 }
-exports.hasKeypathInformationSet = hasKeypathInformationSet;
 function isFinalized(input) {
   return (
     input.finalScriptSig !== undefined || input.finalScriptWitness !== undefined
   );
 }
-exports.isFinalized = isFinalized;
 function getInputIndex(psbt, prevOutHash, prevOutIndex) {
   for (const [index, input] of psbt.txInputs.entries()) {
     if (
-      Buffer.compare(input.hash, prevOutHash) === 0 &&
+      (0, uint8array_tools_1.compare)(input.hash, prevOutHash) === 0 &&
       input.index === prevOutIndex
     ) {
       return index;
@@ -81,7 +82,6 @@ function getInputIndex(psbt, prevOutHash, prevOutIndex) {
   }
   return -1;
 }
-exports.getInputIndex = getInputIndex;
 function getVirtualSize(scriptPubKeyType) {
   switch (scriptPubKeyType) {
     case ScriptPubKeyType.Legacy:
@@ -94,7 +94,6 @@ function getVirtualSize(scriptPubKeyType) {
       return 110;
   }
 }
-exports.getVirtualSize = getVirtualSize;
 function setParam(url, key, value) {
   const parsedURL = new URL(url);
   parsedURL.searchParams.set(key, value);
@@ -143,4 +142,3 @@ function getEndpointUrl(url, payjoinParameters, setParamFunc) {
   }
   return result;
 }
-exports.getEndpointUrl = getEndpointUrl;

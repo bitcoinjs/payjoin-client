@@ -3,6 +3,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 exports.PayjoinClient = void 0;
 const request_1 = require('./request');
 const utils_1 = require('./utils');
+const uint8array_tools_1 = require('uint8array-tools');
 const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
 class PayjoinClient {
   constructor(opts) {
@@ -33,10 +34,9 @@ class PayjoinClient {
     }
   }
   async run() {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const psbt = await this.wallet.getPsbt();
     const clonedPsbt = psbt.clone();
-    const originalType = utils_1.getInputsScriptPubKeyType(clonedPsbt);
+    const originalType = (0, utils_1.getInputsScriptPubKeyType)(clonedPsbt);
     clonedPsbt.finalizeAllInputs();
     const originalTxHex = clonedPsbt.extractTransaction().toHex();
     const broadcastOriginalNow = () => this.wallet.broadcastTx(originalTxHex);
@@ -63,23 +63,13 @@ class PayjoinClient {
         };
       });
       const feeOutput =
-        ((_a = this.payjoinParameters) === null || _a === void 0
-          ? void 0
-          : _a.additionalFeeOutputIndex) !== undefined
-          ? originalOutputs[
-              (_b = this.payjoinParameters) === null || _b === void 0
-                ? void 0
-                : _b.additionalFeeOutputIndex
-            ]
+        this.payjoinParameters?.additionalFeeOutputIndex !== undefined
+          ? originalOutputs[this.payjoinParameters?.additionalFeeOutputIndex]
           : null;
       const originalFeeRate = clonedPsbt.getFeeRate();
       const allowOutputSubstitution = !(
-        ((_c = this.payjoinParameters) === null || _c === void 0
-          ? void 0
-          : _c.disableOutputSubstitution) !== undefined &&
-        ((_d = this.payjoinParameters) === null || _d === void 0
-          ? void 0
-          : _d.disableOutputSubstitution)
+        this.payjoinParameters?.disableOutputSubstitution !== undefined &&
+        this.payjoinParameters?.disableOutputSubstitution
       );
       const payjoinPsbt = await this.payjoinRequester.requestPayjoin(
         clonedPsbt,
@@ -103,7 +93,7 @@ class PayjoinClient {
       // For each inputs in the proposal:
       for (let i = 0; i < payjoinPsbt.data.inputs.length; i++) {
         const proposedPSBTInput = payjoinPsbt.data.inputs[i];
-        if (utils_1.hasKeypathInformationSet(proposedPSBTInput))
+        if ((0, utils_1.hasKeypathInformationSet)(proposedPSBTInput))
           throw new Error('The receiver added keypaths to an input');
         if (
           proposedPSBTInput.partialSig &&
@@ -111,7 +101,7 @@ class PayjoinClient {
         )
           throw new Error('The receiver added partial signatures to an input');
         const proposedTxIn = payjoinPsbt.txInputs[i];
-        const ourInputIndex = utils_1.getInputIndex(
+        const ourInputIndex = (0, utils_1.getInputIndex)(
           clonedPsbt,
           proposedTxIn.hash,
           proposedTxIn.index,
@@ -126,7 +116,7 @@ class PayjoinClient {
               'The proposedTxIn modified the sequence of one of our inputs',
             );
           // Verify the PSBT input is not finalized
-          if (utils_1.isFinalized(proposedPSBTInput))
+          if ((0, utils_1.isFinalized)(proposedPSBTInput))
             throw new Error('The receiver finalized one of our inputs');
           // Verify that <code>non_witness_utxo</code> and <code>witness_utxo</code> are not specified.
           if (proposedPSBTInput.nonWitnessUtxo || proposedPSBTInput.witnessUtxo)
@@ -153,7 +143,7 @@ class PayjoinClient {
             input.signedPSBTInput.sighashType;
         } else {
           // Verify the PSBT input is finalized
-          if (!utils_1.isFinalized(proposedPSBTInput))
+          if (!(0, utils_1.isFinalized)(proposedPSBTInput))
             throw new Error(
               'The receiver did not finalized one of their input',
             );
@@ -169,7 +159,10 @@ class PayjoinClient {
             sequences.add(proposedTxIn.sequence);
           }
           // Verify that the payjoin proposal did not introduced mixed input's type.
-          if (originalType !== utils_1.getInputScriptPubKeyType(payjoinPsbt, i))
+          if (
+            originalType !==
+            (0, utils_1.getInputScriptPubKeyType)(payjoinPsbt, i)
+          )
             throw new Error('Mixed input type detected in the proposal');
         }
       }
@@ -197,28 +190,29 @@ class PayjoinClient {
         const proposedPSBTOutput = payjoinPsbt.data.outputs[i];
         const proposedTxOut = payjoinPsbt.txOutputs[i];
         // Verify that no keypaths is in the PSBT output
-        if (utils_1.hasKeypathInformationSet(proposedPSBTOutput))
+        if ((0, utils_1.hasKeypathInformationSet)(proposedPSBTOutput))
           throw new Error('The receiver added keypaths to an output');
         if (originalOutputs.length === 0) continue;
         const originalOutput = originalOutputs[0];
-        const isOriginalOutput = originalOutput.originalTxOut.script.equals(
-          payjoinPsbt.txOutputs[i].script,
-        );
+        const isOriginalOutput =
+          (0, uint8array_tools_1.compare)(
+            originalOutput.originalTxOut.script,
+            payjoinPsbt.txOutputs[i].script,
+          ) === 0;
         const substitutedOutput =
           !isOriginalOutput &&
           allowOutputSubstitution &&
-          originalOutput.originalTxOut.script.equals(this.paymentScript);
+          (0, uint8array_tools_1.compare)(
+            originalOutput.originalTxOut.script,
+            this.paymentScript,
+          ) === 0;
         if (isOriginalOutput || substitutedOutput) {
           originalOutputs.splice(0, 1);
           if (
             feeOutput &&
             originalOutput.index ===
-              ((_e = this.payjoinParameters) === null || _e === void 0
-                ? void 0
-                : _e.additionalFeeOutputIndex) &&
-            ((_f = this.payjoinParameters) === null || _f === void 0
-              ? void 0
-              : _f.maxAdditionalFeeContribution) &&
+              this.payjoinParameters?.additionalFeeOutputIndex &&
+            this.payjoinParameters?.maxAdditionalFeeContribution &&
             proposedTxOut.value !== feeOutput.originalTxOut.value
           ) {
             const actualContribution =
@@ -226,9 +220,7 @@ class PayjoinClient {
             // The amount that was substracted from the output's value is less or equal to maxadditionalfeecontribution
             if (
               actualContribution >
-              ((_g = this.payjoinParameters) === null || _g === void 0
-                ? void 0
-                : _g.maxAdditionalFeeContribution)
+              this.payjoinParameters?.maxAdditionalFeeContribution
             )
               throw new Error(
                 `The actual contribution is more than maxadditionalfeecontribution`,
@@ -241,9 +233,9 @@ class PayjoinClient {
               payjoinPsbt.txInputs.length - clonedPsbt.txInputs.length;
             if (
               actualContribution >
-              utils_1.getFee(
+              (0, utils_1.getFee)(
                 originalFeeRate,
-                utils_1.getVirtualSize(originalType),
+                (0, utils_1.getVirtualSize)(originalType),
               ) *
                 additionalInputsCount
             )
@@ -252,7 +244,10 @@ class PayjoinClient {
               );
           } else if (
             allowOutputSubstitution &&
-            originalOutput.originalTxOut.script.equals(this.paymentScript)
+            (0, uint8array_tools_1.compare)(
+              originalOutput.originalTxOut.script,
+              this.paymentScript,
+            ) === 0
           ) {
             // That's the payment output, the receiver may have changed it.
           } else {
@@ -270,9 +265,10 @@ class PayjoinClient {
         if (
           !allowOutputSubstitution ||
           originalOutputs.length !== 1 ||
-          !originalOutputs
-            .splice(0, 1)[0]
-            .originalTxOut.script.equals(this.paymentScript)
+          (0, uint8array_tools_1.compare)(
+            originalOutputs.splice(0, 1)[0].originalTxOut.script,
+            this.paymentScript,
+          ) !== 0
         ) {
           throw new Error(
             'Some of our outputs are not included in the proposal',
@@ -280,25 +276,16 @@ class PayjoinClient {
         }
       }
       // If minfeerate was specified, check that the fee rate of the payjoin transaction is not less than this value.
-      if (
-        (_h = this.payjoinParameters) === null || _h === void 0
-          ? void 0
-          : _h.minimumFeeRate
-      ) {
+      if (this.payjoinParameters?.minimumFeeRate) {
         let newFeeRate;
         try {
           newFeeRate = payjoinPsbt.getFeeRate();
-        } catch (_k) {
+        } catch {
           throw new Error(
             'The payjoin receiver did not included UTXO information to calculate fee correctly',
           );
         }
-        if (
-          newFeeRate <
-          ((_j = this.payjoinParameters) === null || _j === void 0
-            ? void 0
-            : _j.minimumFeeRate)
-        )
+        if (newFeeRate < this.payjoinParameters?.minimumFeeRate)
           throw new Error(
             'The payjoin receiver created a payjoin with a too low fee rate',
           );

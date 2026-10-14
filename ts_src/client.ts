@@ -11,7 +11,8 @@ import {
   isFinalized,
 } from './utils';
 import { PsbtTxInput, PsbtTxOutput } from 'bitcoinjs-lib';
-import { PsbtInput, PsbtOutput } from 'bip174/src/lib/interfaces';
+import { PsbtInput, PsbtOutput } from 'bip174';
+import { compare } from 'uint8array-tools';
 
 const BROADCAST_ATTEMPT_TIME = 2 * 60 * 1000; // 2 minute
 
@@ -25,7 +26,7 @@ export interface PayjoinClientOptionalParameters {
 
 export class PayjoinClient {
   private wallet: IPayjoinClientWallet;
-  private paymentScript: Buffer;
+  private paymentScript: Uint8Array;
   private payjoinRequester: IPayjoinRequester;
   private payjoinParameters?: PayjoinClientOptionalParameters;
   constructor(opts: PayjoinClientOpts) {
@@ -213,7 +214,7 @@ export class PayjoinClient {
         throw new Error('Mixed sequence detected in the proposal');
 
       const originalFee = clonedPsbt.getFee();
-      let newFee: number;
+      let newFee: bigint;
       const signedPsbt = await this.wallet.signPsbt(payjoinPsbt);
       try {
         newFee = signedPsbt.getFee();
@@ -238,13 +239,16 @@ export class PayjoinClient {
 
         if (originalOutputs.length === 0) continue;
         const originalOutput = originalOutputs[0];
-        const isOriginalOutput = originalOutput.originalTxOut.script.equals(
-          payjoinPsbt.txOutputs[i].script,
-        );
+        const isOriginalOutput =
+          compare(
+            originalOutput.originalTxOut.script,
+            payjoinPsbt.txOutputs[i].script,
+          ) === 0;
         const substitutedOutput =
           !isOriginalOutput &&
           allowOutputSubstitution &&
-          originalOutput.originalTxOut.script.equals(this.paymentScript);
+          compare(originalOutput.originalTxOut.script, this.paymentScript) ===
+            0;
         if (isOriginalOutput || substitutedOutput) {
           originalOutputs.splice(0, 1);
           if (
@@ -280,7 +284,8 @@ export class PayjoinClient {
               );
           } else if (
             allowOutputSubstitution &&
-            originalOutput.originalTxOut.script.equals(this.paymentScript)
+            compare(originalOutput.originalTxOut.script, this.paymentScript) ===
+              0
           ) {
             // That's the payment output, the receiver may have changed it.
           } else {
@@ -298,9 +303,10 @@ export class PayjoinClient {
         if (
           !allowOutputSubstitution ||
           originalOutputs.length !== 1 ||
-          !originalOutputs
-            .splice(0, 1)[0]
-            .originalTxOut.script.equals(this.paymentScript)
+          compare(
+            originalOutputs.splice(0, 1)[0].originalTxOut.script,
+            this.paymentScript,
+          ) !== 0
         ) {
           throw new Error(
             'Some of our outputs are not included in the proposal',
@@ -357,7 +363,7 @@ type PayjoinClientOpts = PayjoinClientOptsUrl | PayjoinClientOptsRequester;
 interface PayjoinClientOptsUrl {
   wallet: IPayjoinClientWallet;
   payjoinUrl: string;
-  paymentScript: Buffer;
+  paymentScript: Uint8Array;
   payjoinParameters?: PayjoinClientOptionalParameters;
   getEndpointUrl?: (
     url: string,
@@ -368,7 +374,7 @@ interface PayjoinClientOptsUrl {
 interface PayjoinClientOptsRequester {
   wallet: IPayjoinClientWallet;
   payjoinRequester: IPayjoinRequester;
-  paymentScript: Buffer;
+  paymentScript: Uint8Array;
   payjoinParameters?: PayjoinClientOptionalParameters;
 }
 
